@@ -1,7 +1,14 @@
 @use '../Global/color' as *;
 
+//全体の設定
 .header {
     background-color: $main-color;
     height: 10vh;
     width: 100%;
+    display: flex;
+}
+
+.button {
+    background-color: transparent;
+	color: $button-color-light;
 }
