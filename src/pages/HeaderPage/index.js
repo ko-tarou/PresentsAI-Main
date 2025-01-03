@@ -1,11 +1,14 @@
 import { useState } from "react";
 import styles from "../../styles/HeaderPage/Header.module.scss";
-import MenuIcon from "@mui/icons-material/Menu";
 
 //Icon
-import IconButton from "@mui/material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import MailIcon from "@mui/icons-material/Mail";
 
 // Material-UI components
+import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 
@@ -49,9 +52,18 @@ export default function HeaderPage() {
                         paper: styles.menu,
                     }}
                     >
-                    <MenuItem onClick={handleClose}>メニュー項目1</MenuItem>
-                    <MenuItem onClick={handleClose}>メニュー項目2</MenuItem>
-                    <MenuItem onClick={handleClose}>メニュー項目3</MenuItem>
+                    <MenuItem onClick={handleClose} className={styles.menuItem}>
+                        <AccountCircleIcon/>
+                        <div className={styles.menuItemText}>Account</div>
+                    </MenuItem>
+                    <MenuItem onClick={handleClose} className={styles.menuItem}>
+                        <MailIcon/>
+                        <div className={styles.menuItemText}>Mail</div>
+                    </MenuItem>
+                    <MenuItem onClick={handleClose} className={styles.menuItem}>
+                        <SettingsIcon/>
+                        <div className={styles.menuItemText}>Setting</div>
+                    </MenuItem>
                 </Menu>
             </div>
         </div>
