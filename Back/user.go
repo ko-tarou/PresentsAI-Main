@@ -26,11 +26,14 @@ type UserToProject struct {
 }
 
 
+//route設定
+func RegisterUserRoutes(router *mux.Router) {
+	router.HandleFunc("/users", createUser).Methods("POST")
+	router.HandleFunc("/users", getUsers).Methods("GET")
+	router.HandleFunc("/users/{id}", deleteUser).Methods("DELETE")
+}
 
-
-
-
-
+//API設定
 func createUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 
