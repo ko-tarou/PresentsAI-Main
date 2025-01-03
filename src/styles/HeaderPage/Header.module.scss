@@ -1,0 +1,7 @@
+@use '../Global/color' as *;
+
+.header {
+    background-color: $main-color;
+    height: 10%;
+    width: 100%;
+}
