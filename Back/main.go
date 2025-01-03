@@ -42,9 +42,10 @@ func main() {
 	initDB()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/users", createUser).Methods("POST")
-	router.HandleFunc("/users", getUsers).Methods("GET")
-	router.HandleFunc("/users/{id}", deleteUser).Methods("DELETE")
+
+	RegisterUserRoutes(router)
+	RegisterProjectRoutes(router)
+	RegisterUserToProjectRoutes(router)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", enableCORS(router)))
