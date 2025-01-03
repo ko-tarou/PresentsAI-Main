@@ -2,12 +2,32 @@
 
 //全体の設定
 .header {
-    background-color: $main-color;
+    background-color: $darkbrack;
     height: 10vh;
     width: 100%;
     display: flex;
 }
 
+.content {
+    display: flex;
+    width: 100%;
+    height: auto;
+}
+
 .button {
 	color: $button-color-light;
+    // color: red;
+    margin-left: auto;
+
+    svg {
+        font-size: 50px; /* アイコンのサイズを指定 */
+    }
+}
+
+.menu {
+    background-color: $lightbrack;
+    color:white;
+    padding: 0;
+    left:"auto";
+    right: 0,;
 }
