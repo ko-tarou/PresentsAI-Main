@@ -19,9 +19,7 @@ import MenuItem from "@mui/material/MenuItem";
 
 export default function HeaderPage() {
     const [anchorEl, setAnchorEl] = useState(null);
-    const [isAccountOpen, setAccountOpen] = useState(false);
-    const [isMailOpen, setMailOpen] = useState(false);
-    const [isSettingOpen, setSettingOpen] = useState(false);
+    const [activeModal , setActiveModal] = useState(null);
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -31,25 +29,13 @@ export default function HeaderPage() {
         setAnchorEl(null);
     }
 
-	const openAccount = () => {
-		setAccountOpen(true);
-        handleClose()
-	}
-
-	const openMail = () => {
-        setMailOpen(true);
-        handleClose()
+    const openModal = (modalName) => {
+        setActiveModal(modalName);
+        handleClose();
     }
 
-    const openSetting = () => {
-		setSettingOpen(true);
-		handleClose()
-	}
-
     const closeModal = () => {
-        setAccountOpen(false);
-        setMailOpen(false);
-        setSettingOpen(false);
+        setActiveModal(null);
     }
 
     return (
@@ -81,15 +67,15 @@ export default function HeaderPage() {
                         paper: styles.menu,
                     }}
                     >
-                    <MenuItem onClick={openAccount} className={styles.menuItem}>
+                    <MenuItem onClick={() => openModal("account")} className={styles.menuItem}>
                         <AccountCircleIcon/>
                         <div className={styles.menuItemText}>Account</div>
                     </MenuItem>
-                    <MenuItem onClick={openMail} className={styles.menuItem}>
+                    <MenuItem onClick={() => openModal("mail")} className={styles.menuItem}>
                         <MailIcon/>
                         <div className={styles.menuItemText}>Mail</div>
                     </MenuItem>
-                    <MenuItem onClick={openSetting} className={styles.menuItem}>
+                    <MenuItem onClick={() => openModal("setting")} className={styles.menuItem}>
                         <SettingsIcon/>
                         <div className={styles.menuItemText}>Setting</div>
                     </MenuItem>
@@ -97,19 +83,19 @@ export default function HeaderPage() {
 
                 {/* modal */}
 				<CustomModal
-					open={isAccountOpen}
+					open={activeModal === "account"}
 					onClose={closeModal}
                 >
                     <AccountModal/>
                 </CustomModal>
 				<CustomModal
-                    open={isMailOpen}
+                    open={activeModal === "mail"}
                     onClose={closeModal}
                 >
                     <div>Mail</div>
                 </CustomModal>
 				<CustomModal
-                    open={isSettingOpen}
+                    open={activeModal === "setting"}
                     onClose={closeModal}
                 >
                     <div>Setting</div>
