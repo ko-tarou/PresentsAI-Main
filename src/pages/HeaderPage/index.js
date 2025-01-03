@@ -2,6 +2,10 @@ import { useState } from "react";
 import styles from "../../styles/HeaderPage/Header.module.scss";
 import CustomModal from "../../component/Modal/CustomModal.js";
 
+
+//Modals
+import AccountModal from "../../component/Header/Account.js";
+
 //Icon
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -96,7 +100,7 @@ export default function HeaderPage() {
 					open={isAccountOpen}
 					onClose={closeModal}
                 >
-                    <div>Account</div>
+                    <AccountModal/>
                 </CustomModal>
 				<CustomModal
                     open={isMailOpen}
