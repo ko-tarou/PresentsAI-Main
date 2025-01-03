@@ -16,15 +16,8 @@ type User struct {
 	Password  string    `gorm:"size:100;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 
-	UserToProjects []UserToProject  `gorm:"constraint:OnDelete:CASCADE;"`
+	Projects []Project `gorm:"many2many:user_to_projects;constraint:OnDelete:CASCADE;"`
 }
-
-type UserToProject struct {
-	ID        uint `gorm:"primaryKey"`
-	UserID    uint `gorm:"not null;constraint:OnDelete:CASCADE;foreignKey:UserID;references:ID;index"`	
-	ProjectID uint
-}
-
 
 //route設定
 func RegisterUserRoutes(router *mux.Router) {

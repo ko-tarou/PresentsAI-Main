@@ -12,6 +12,8 @@ type Project struct {
 	ID        uint      `gorm:"primaryKey"`
 	Title      string    `gorm:"size:100;unique;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
+
+	Users []User `gorm:"many2many:user_to_projects;constraint:OnDelete:CASCADE;"`
 }
 
 

@@ -45,6 +45,7 @@ func main() {
 
 	RegisterUserRoutes(router)
 	RegisterProjectRoutes(router)
+	RegisterUserToProjectRoutes(router)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", enableCORS(router)))
