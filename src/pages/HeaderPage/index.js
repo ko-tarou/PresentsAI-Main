@@ -1,4 +1,4 @@
-import styles from "../../styles/HeaderPage/Header.module.css";
+import styles from "../../styles/HeaderPage/Header.module.scss";
 
 export default function HeaderPage() {
 return (
