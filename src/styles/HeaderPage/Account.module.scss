@@ -1,0 +1,76 @@
+@use '../Global/color' as *;
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .title {
+        font-size: 48px;
+        color:$nomalgray;
+        font-weight: bold;
+        text-align: center;
+        padding-bottom: 30px;
+    }
+
+    .form {
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 315px;
+        height: 350px;
+        
+        .input {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        
+            .label {
+                font-size: 14px;
+                color: $nomalgray;
+                font-weight: bold;
+                text-align: left;
+            }
+        
+            input{
+                background-color: $darkgray;
+                width: 305px;
+                height: 39px;
+                border-radius: 10px;
+                padding-left:10px;
+                border: none;
+            }
+        }
+        
+        .main_button {
+            display: flex;
+            margin-top: auto;
+
+            button {
+                font-size: 14px;
+                background-color: $darkgray;
+                border: none;
+                border-radius: 10px;
+                width: 135px;
+                height: 29px;
+                color:$nomalgray;
+            }
+        }
+		.sub_button {
+            display: flex;
+            
+
+            button {
+                font-size: 11px;
+                background-color: $lightbrack;
+                border: none;
+                border-radius: 10px;
+                width: 135px;
+                height: 29px;
+                color:$nomalgray;
+            }
+        }
+    }
+}

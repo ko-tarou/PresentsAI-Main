@@ -1,0 +1,66 @@
+@use '../Global/color' as *;
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: $darkgray;
+    color: $button-color-light;
+}
+
+.main {
+    display: flex;
+    flex: 1;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: $lightbrack;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+
+    ul {
+        list-style: none;
+        padding: 0;
+
+        li {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            color:$button-color-dark;
+            font-weight: bold;
+            font-size: 28px;
+            position:relative;
+        }
+    }
+}
+
+.active {
+    color: #fff !important;
+    position: relative;
+
+    &::after {
+        content:"";
+        position:absolute;
+        right: -10px;
+        top:0;
+        height:100%;
+        width: 5px;
+        background-color: #fff;
+        border-radius: 0 5px 5px 0;
+    }
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+
+    h2 {
+        margin-bottom: 10px;
+    }
+
+    p {
+        line-height: 1.6;
+    }
+}
