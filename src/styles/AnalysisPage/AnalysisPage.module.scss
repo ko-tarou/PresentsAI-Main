@@ -27,10 +27,10 @@
             padding: 15px 20px;
             cursor: pointer;
             border-radius: 5px;
-            color:$button-color-dark;
+            color: $button-color-dark;
             font-weight: bold;
             font-size: 28px;
-            position:relative;
+            position: relative;
         }
     }
 }
@@ -40,11 +40,11 @@
     position: relative;
 
     &::after {
-        content:"";
-        position:absolute;
+        content: "";
+        position: absolute;
         right: -10px;
-        top:0;
-        height:100%;
+        top: 0;
+        height: 100%;
         width: 5px;
         background-color: #fff;
         border-radius: 0 5px 5px 0;
@@ -63,4 +63,88 @@
     p {
         line-height: 1.6;
     }
+}
+
+.scoreContainer {
+    width: 300px; /* チャート全体の幅を大きく */
+    height: 300px; /* チャート全体の高さを大きく */
+    background-color: #2e2e2e;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    position: absolute;
+    top: 90px;
+    left: 350px;
+    z-index: 10;
+}
+.scoreTitle {
+    color: #ffffff; /* タイトルの文字色 */
+    font-size: 24px; /* フォントサイズを大きく */
+    margin-bottom: 3px; /* タイトルとチャート間の余白を調整 */
+    text-align: left; /* 左寄せ */
+    width: 100%; /* 横幅を100%にして親要素に合わせる */
+}
+
+.chartCanvas {
+    max-width: 100%;
+    width: 100%; /* 親のサイズに合わせる */
+    height: 100%; /* 親のサイズに合わせる */;
+}
+
+.speedContainer {
+    margin-top: 400px; /* レーダーチャートとの間に余白を追加 */
+    padding: 10px;
+    background-color: #2e2e2e; /* 背景色 */
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    position: relative; /* 必要に応じて外側のスタイルに調整 */
+    margin-left: 35px;
+}
+
+.speedTitle {
+    font-size: 18px;
+    color: #ffffff; /* タイトルの色 */
+    margin-bottom: 8px;
+}
+
+.speedLimits {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #b0b0b0; /* 薄い文字色 */
+    margin-bottom: 8px;
+}
+
+.speedBarWrapper {
+    display: flex;
+    gap: 4px; /* バー間の余白 */
+    margin-bottom: 8px;
+}
+
+.speedBarActive {
+    width: 20px;
+    height: 10px;
+    background-color: #2fbf71; /* アクティブバーの色 */
+    border-radius: 2px;
+}
+
+.speedBarInactive {
+    width: 20px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.2); /* 非アクティブバーの色 */
+    border-radius: 2px;
+}
+
+.speedValue {
+    font-size: 18px;
+    color: #ffffff; /* 数値の色 */
+    font-weight: bold;
 }
