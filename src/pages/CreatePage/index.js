@@ -1,8 +1,12 @@
+import { useState } from "react";
+import HeaderPage from "../HeaderPage/index.js";
+import styles from "../../styles/CreatePage/CreatePage .module.scss";
+
 export default function CreatePage() {
+
 	return (
-		<div>
-			<h1>作成ページ</h1>
-			<p>ここは作成ページです。</p>
+		<div className={styles.main}>
+			<HeaderPage/>
 		</div>
 	);
 }
