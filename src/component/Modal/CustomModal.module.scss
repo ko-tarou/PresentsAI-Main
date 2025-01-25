@@ -1,3 +1,5 @@
+@use '../../styles/Global/color.scss' as *;
+
 .overlay {
 	position: fixed;
 	top: 0;
@@ -12,10 +14,11 @@
 }
 
 .modal {
-	background: white;
+	background: $lightbrack;
 	padding: 20px;
-	border-radius: 8px;
-	width: 400px;
+	border-radius: 20px;
+	height: 508px;
+	width: 778px;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 	position: relative;
 }

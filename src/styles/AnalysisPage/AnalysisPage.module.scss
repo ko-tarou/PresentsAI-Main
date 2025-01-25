@@ -27,16 +27,28 @@
             padding: 15px 20px;
             cursor: pointer;
             border-radius: 5px;
-            color: #c5c5d5;
+            color:$button-color-dark;
             font-weight: bold;
             font-size: 28px;
+            position:relative;
         }
     }
 }
 
 .active {
-    background-color: #4caf50;
-    color: #fff;
+    color: #fff !important;
+    position: relative;
+
+    &::after {
+        content:"";
+        position:absolute;
+        right: -10px;
+        top:0;
+        height:100%;
+        width: 5px;
+        background-color: #fff;
+        border-radius: 0 5px 5px 0;
+    }
 }
 
 .content {
