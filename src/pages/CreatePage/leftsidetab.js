@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Title, Category, Animation, Slideshow, Functions, Equalizer } from "@mui/icons-material";
-import styles from "../../styles/CreatePage/CreatePage.module.scss";
+import styles from "../../styles/CreatePage/LeftsideTab.module.scss";
 
 export default function LeftTab(){
 
