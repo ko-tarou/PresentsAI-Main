@@ -1,0 +1,85 @@
+@use '../Global/color' as *;
+.pageBackground {
+  display: flex;
+  background-color: $lightbrack;
+  min-height: 100vh;
+}
+
+.aspectRatioBox{
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+  height: 100vh;
+}
+
+.content {
+  display: flex;
+  width: 95%;
+  aspect-ratio: 16 / 9;
+  background-color: #D9D9D9;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  font-size: 5rem;
+  margin-left: 5%;
+  margin-top: 5%;
+}
+
+/* aspect-ratioをサポートしない古いブラウザ向けフォールバック */
+.content::before {
+  content: '';
+  display: block;
+  padding-top: 56.25%; /* 16:9の高さ（9 ÷ 16 = 0.5625 = 56.25%） */
+}
+
+.PresenPageSidebar {
+  background-color: $darkbrack;
+  display: flex;
+  width: 8%; /* サイドバーの幅を指定 */
+  height: 100vh; /* 高さをビュー全体の高さに設定 */
+  color: $nomalgray;
+}
+
+.memoaiassist {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 39.4%;
+  margin-top: 13%;
+}
+
+.memo{
+  display: flex;
+  background-color: white;
+  color: black;
+  height: 15vh;
+  width: 90%;
+  border-radius: 4px;
+  font-size: 25px;
+}
+
+.aiassist{
+  display: flex;
+  background-color: #333438;
+  color: white;
+  height: 55vh;
+  width: 90%;
+  border-radius: 4px;
+  margin-top: 5%;
+  font-size: 25px;
+}
+
+.Timer{
+  margin-top: 5%;
+  margin-left: 5%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  color: white;
+  background-color: #333438;
+  height: 13vh;
+  width: 30%;
+  font-size: 70px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
