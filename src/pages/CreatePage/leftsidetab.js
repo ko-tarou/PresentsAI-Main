@@ -63,36 +63,42 @@ export default function LeftTab(){
 					onClick={() => setActiveTab("text")}
 				>
                     <Title/>
+                    text
 				</li>
 				<li
 					className={activeTab === "shape" ? styles.active : ""}
 					onClick={() => setActiveTab("shape")}
 				>
 					<Category/>
+                    shape
 				</li>
 				<li
 					className={activeTab === "animation" ? styles.active : ""}
 					onClick={() => setActiveTab("animation")}
 				>
 					<Animation/>
+                    animation
 				</li>
                 <li
 					className={activeTab === "slideshow" ? styles.active : ""}
 					onClick={() => setActiveTab("slideshow")}
 				>
 					<Slideshow/>
+                    slideshow
 				</li>
                 <li
 					className={activeTab === "math" ? styles.active : ""}
 					onClick={() => setActiveTab("math")}
 				>
 					<Functions/>
+                    math
 				</li>
                 <li
 					className={activeTab === "graph" ? styles.active : ""}
 					onClick={() => setActiveTab("graph")}
 				>
 					<Equalizer/>
+                    graph
 				</li>
 
                 <main className={styles.content}>{renderContent()}</main>
