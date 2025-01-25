@@ -7,9 +7,10 @@ export default function TopPage() {
   const [activeTab, setActiveTab] = useState('tab1');
 
   return (
-    <div>
-      <HeaderPage />
-      <div className={styles.Box}>
+		<div>
+		<HeaderPage />
+    <div className={styles.toppage}>
+      <div className={styles.Box1}>
         {/* ボタンを縦並びに配置 */}
         <button
           onClick={() => setActiveTab('tab1')}
@@ -23,13 +24,16 @@ export default function TopPage() {
         >
           <Settings className={styles.Settings} />
         </button>
-
+				
         {/* コンテンツ */}
-        <div>
-          {activeTab === 'tab1' && <div>タブ 1 の内容がここに表示されます。</div>}
-          {activeTab === 'tab2' && <div>タブ 2 の内容がここに表示されます。</div>}
-        </div>
-      </div>
+					<div>
+						{activeTab === 'tab1' && <div>タブ 1 の内容がここに表示されます。</div>}
+						{activeTab === 'tab2' && <div>タブ 2 の内容がここに表示されます。</div>}
+					</div>
+				</div>
+				<div className={styles.Box2}>
+				</div>
+			</div>
     </div>
   );
 }

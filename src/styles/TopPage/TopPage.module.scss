@@ -1,13 +1,31 @@
-.Box {
+@use '../Global/color' as *;
+
+.toppage{
+	display: flex;
+}
+
+.Box1 {
   display: flex;
   flex-direction: column; /* 縦方向に並べる */
   align-items: center; /* 中央揃え */
-  gap: 20px; /* アイコン間のスペース */
+
   padding: 20px;
   background-color: #010101;
 
 	height: 2000px;
 	width: 30px;
+}
+
+.Box2 {
+  display: flex;
+  flex-direction: column; /* 縦方向に並べる */
+  align-items: center; /* 中央揃え */
+
+  padding: 20px;
+  background-color: $lightbrack;
+  right: 100%;
+	height: 2000px;
+	width: 300px;
 }
 
 .button {
@@ -16,24 +34,25 @@
   justify-content: center;
   width: 60px; /* ボタンの幅 */
   height: 60px; /* ボタンの高さ */
-  background-color: #575f69;
-  color: black;
+  background-color: $lightbrack;
+  color: $darkbrack;
   border: none;
-  border-radius: 50%;
+
   cursor: pointer;
   transition: transform 0.2s, background-color 0.3s;
 
   &:hover {
-    background-color: #005bb5;
+    background-color: $lightbrack;
     transform: scale(1.1);
   }
 }
 
 .inactive {
-  background-color: #ccc;
+  background-color: #000000;
   color: #666;
 }
 
 .Home, .Settings {
-  font-size: 32px; /* アイコンのサイズを調整 */
+	color: $nomalgray;
+  font-size: 50px; /* アイコンのサイズを調整 */
 }
