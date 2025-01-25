@@ -1,0 +1,39 @@
+.Box {
+  display: flex;
+  flex-direction: column; /* 縦方向に並べる */
+  align-items: center; /* 中央揃え */
+  gap: 20px; /* アイコン間のスペース */
+  padding: 20px;
+  background-color: #010101;
+
+	height: 2000px;
+	width: 30px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px; /* ボタンの幅 */
+  height: 60px; /* ボタンの高さ */
+  background-color: #575f69;
+  color: $;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.3s;
+
+  &:hover {
+    background-color: #005bb5;
+    transform: scale(1.1);
+  }
+}
+
+.inactive {
+  background-color: #ccc;
+  color: #666;
+}
+
+.Home, .Settings {
+  font-size: 32px; /* アイコンのサイズを調整 */
+}
