@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Title, Category, Animation, Slideshow, Equalizer } from "@mui/icons-material";
-import styles from "../../styles/CreatePage/CreatePage.module.scss";
+import { Title, Category, Animation, Slideshow, Equalizer } from "@mui/icons-material"; // Functionsを削除
+import styles from "../../styles/CreatePage/LeftsideTab.module.scss";
 
 export default function LeftTab() {
     const [activeTab, setActiveTab] = useState("analysis");
@@ -89,7 +89,7 @@ export default function LeftTab() {
                     className={activeTab === "math" ? styles.active : ""}
                     onClick={() => setActiveTab("math")}
                 >
-                    {/* Material Symbols */}
+                    {/* Material Symbols を使用 */}
                     <span className="material-symbols-outlined">function</span>
                     math
                 </li>
