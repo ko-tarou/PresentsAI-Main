@@ -18,7 +18,7 @@ export default function AnalysisPage() {
                     <div className={styles.tabContent}>
                         <div className={styles.chartWrapper}></div>
                         <div className={styles.scoreWrapper}>
-                            <RadarChart />
+                            <RadarChart values={[90, 80, 100, 90, 10]} />
                             <ScoreDeltaChart />
                         </div>
                         <div className={styles.speedAdviceWrapper}>
