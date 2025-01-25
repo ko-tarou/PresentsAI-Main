@@ -16,7 +16,6 @@ ChartJS.register(
     Tooltip
 );
 
-
 export default function ScoreDeltaChart() {
     const data = {
         labels: Array.from({ length: 12 }, (_, i) => i + 1),
@@ -57,6 +56,13 @@ export default function ScoreDeltaChart() {
                 stacked: true,
                 grid: { color: "rgba(255, 255, 255, 0.1)" },
             },
+        },
+        animation: {
+            duration: 1000, // アニメーションの長さ（ミリ秒）
+            easing: 'easeOutQuart', // イージング効果（スムーズにアニメーション）
+            onComplete: function() {
+                // アニメーション完了後の処理が必要な場合はここに追加
+            }
         },
     };
 

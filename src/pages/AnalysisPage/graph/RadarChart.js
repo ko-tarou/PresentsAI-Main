@@ -22,7 +22,7 @@ export default function RadarChart() {
         labels: ["項目1", "項目2", "項目3", "項目4", "項目5"],
         datasets: [
             {
-                data: [100, 100, 100, 100, 100],
+                data: [100, 100, 100, 100, 100], // データは全て100
                 backgroundColor: "rgba(47, 191, 113, 0.2)", // 内側の色
                 borderColor: "rgba(47, 191, 113, 1)", // 外側の枠線の色
                 borderWidth: 2,
@@ -40,11 +40,12 @@ export default function RadarChart() {
         scales: {
             r: {
                 angleLines: {
-                    display: false,
+                    display: false, // 角度線を非表示
                 },
                 ticks: {
                     display: false,
-                    max: 30, // 最大値を30にしてグリッドを小さく
+                    max: 100, // 最大値を明示的に指定
+                    beginAtZero: true, // 必ず0から始まるようにする
                 },
                 grid: {
                     color: "rgba(255, 255, 255, 0.1)", // グリッド線の色
@@ -58,6 +59,7 @@ export default function RadarChart() {
             },
         },
     };
+    
 
     return (
         <div className={styles.scoreContainer}>
