@@ -1,7 +1,21 @@
 @use '../Global/color' as *;
 
 .main {
-    background-color: $darkbrack;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
     overflow: hidden;
+}
+
+.rightsidebar {
+    height: 90vh;
+    width: 285px;
+    background-color: $darkgray;
+    position: fixed;
+    right: 0;
+    top: 10vh;
 }
