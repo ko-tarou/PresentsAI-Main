@@ -5,3 +5,12 @@
     height: 100%;
     overflow: hidden;
 }
+
+.rightsidebar {
+    height: 90vh;
+    width: 285px;
+    background-color: $darkgray;
+    position: fixed;
+    right: 0;
+    top: 10vh;
+}
