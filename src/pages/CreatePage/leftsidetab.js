@@ -3,7 +3,7 @@ import { Title, Category, Animation, Slideshow, Equalizer } from "@mui/icons-mat
 import styles from "../../styles/CreatePage/LeftsideTab.module.scss";
 
 export default function LeftTab() {
-    const [activeTab, setActiveTab] = useState("analysis");
+    const [activeTab, setActiveTab] = useState("text");
 
     const renderContent = () => {
         switch (activeTab) {
@@ -16,35 +16,35 @@ export default function LeftTab() {
                 );
             case "shape":
                 return (
-                    <div className={styles.tabContent}>
+                    <div>
                         <h2>Recording</h2>
                         <p>This is the recording page content.</p>
                     </div>
                 );
             case "animation":
                 return (
-                    <div className={styles.tabContent}>
+                    <div>
                         <h2>Comment</h2>
                         <p>This is the comment page content.</p>
                     </div>
                 );
             case "slideshow":
                 return (
-                    <div className={styles.tabContent}>
+                    <div>
                         <h2>Comment</h2>
                         <p>This is the comment page content.</p>
                     </div>
                 );
             case "math":
                 return (
-                    <div className={styles.tabContent}>
+                    <div>
                         <h2>Comment</h2>
                         <p>This is the comment page content.</p>
                     </div>
                 );
             case "graph":
                 return (
-                    <div className={styles.tabContent}>
+                    <div>
                         <h2>Comment</h2>
                         <p>This is the comment page content.</p>
                     </div>
@@ -55,54 +55,56 @@ export default function LeftTab() {
     };
 
     return (
-        <aside className={styles.sidebar}>
-            <ul>
-                <li
-                    className={activeTab === "text" ? styles.active : ""}
-                    onClick={() => setActiveTab("text")}
-                >
-                    <Title />
-                    text
-                </li>
-                <li
-                    className={activeTab === "shape" ? styles.active : ""}
-                    onClick={() => setActiveTab("shape")}
-                >
-                    <Category />
-                    shape
-                </li>
-                <li
-                    className={activeTab === "animation" ? styles.active : ""}
-                    onClick={() => setActiveTab("animation")}
-                >
-                    <Animation />
-                    animation
-                </li>
-                <li
-                    className={activeTab === "slideshow" ? styles.active : ""}
-                    onClick={() => setActiveTab("slideshow")}
-                >
-                    <Slideshow />
-                    slideshow
-                </li>
-                <li
-                    className={activeTab === "math" ? styles.active : ""}
-                    onClick={() => setActiveTab("math")}
-                >
-                    {/* Material Symbols を使用 */}
-                    <span className="material-symbols-outlined">function</span>
-                    math
-                </li>
-                <li
-                    className={activeTab === "graph" ? styles.active : ""}
-                    onClick={() => setActiveTab("graph")}
-                >
-                    <Equalizer />
-                    graph
-                </li>
-
-                <main className={styles.content}>{renderContent()}</main>
-            </ul>
-        </aside>
+        <div className={styles.sidebar}>
+            <aside className={styles.tab}>
+                <ul>
+                    <li
+                        className={activeTab === "text" ? styles.active : ""}
+                        onClick={() => setActiveTab("text")}
+                    >
+                        <Title />
+                        text
+                    </li>
+                    <li
+                        className={activeTab === "shape" ? styles.active : ""}
+                        onClick={() => setActiveTab("shape")}
+                    >
+                        <Category />
+                        shape
+                    </li>
+                    <li
+                        className={activeTab === "animation" ? styles.active : ""}
+                        onClick={() => setActiveTab("animation")}
+                    >
+                        <Animation />
+                        animation
+                    </li>
+                    <li
+                        className={activeTab === "slideshow" ? styles.active : ""}
+                        onClick={() => setActiveTab("slideshow")}
+                    >
+                        <Slideshow />
+                        slideshow
+                    </li>
+                    <li
+                        className={activeTab === "math" ? styles.active : ""}
+                        onClick={() => setActiveTab("math")}
+                    >
+                        <span className="material-symbols-outlined">function</span>
+                        math
+                    </li>
+                    <li
+                        className={activeTab === "graph" ? styles.active : ""}
+                        onClick={() => setActiveTab("graph")}
+                    >
+                        <Equalizer />
+                        graph
+                    </li>
+                </ul>
+            </aside>
+			<div className={styles.tabContent}>
+                {renderContent()}
+            </div>
+        </div>
     );
 }

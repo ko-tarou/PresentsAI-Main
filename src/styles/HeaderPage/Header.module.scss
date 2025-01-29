@@ -2,7 +2,7 @@
 
 //全体の設定
 .header {
-    background-color: $darkbrack;
+    background-color: $darkblack;
     height: 10vh;
     width: 100%;
     display: flex;
@@ -25,7 +25,7 @@
 }
 
 .menu {
-    background-color: $lightbrack;
+    background-color: $lightblack;
     color:white;
     padding: 0;
     margin-top: -1px;
@@ -43,9 +43,9 @@
     padding: 8px,16px;
     font-size: 20px;
     font-weight: bold;
-    border-bottom: 3px solid $darkbrack;
+    border-bottom: 3px solid $darkblack;
     box-sizing: border-box;
-    color: $nomalgray;
+    color: $normalgray;
 
 	svg {
 		font-size: 50px;

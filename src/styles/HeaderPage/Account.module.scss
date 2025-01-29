@@ -7,7 +7,7 @@
 
     .title {
         font-size: 48px;
-        color:$nomalgray;
+        color:$normalgray;
         font-weight: bold;
         text-align: center;
         padding-bottom: 30px;
@@ -29,7 +29,7 @@
         
             .label {
                 font-size: 14px;
-                color: $nomalgray;
+                color: $normalgray;
                 font-weight: bold;
                 text-align: left;
             }
@@ -55,7 +55,7 @@
                 border-radius: 10px;
                 width: 135px;
                 height: 29px;
-                color:$nomalgray;
+                color:$normalgray;
             }
         }
 		.sub_button {
@@ -64,12 +64,12 @@
 
             button {
                 font-size: 11px;
-                background-color: $lightbrack;
+                background-color: $lightblack;
                 border: none;
                 border-radius: 10px;
                 width: 135px;
                 height: 29px;
-                color:$nomalgray;
+                color:$normalgray;
             }
         }
     }

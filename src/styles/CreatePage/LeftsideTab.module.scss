@@ -1,21 +1,18 @@
 @use '../Global/color' as *;
 
-.container {
+.sidebar{
     display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: $darkgray;
-    color: $button-color-light;
 }
 
-.sidebar {
-    width: 75px;
-    background-color: $darkbrack;
-    padding: 0px;
+.tab {
+    display: flex;
+    width: 86px;
+    height: 90vh;
+    background-color: $darkblack;
 
     ul {
-        list-style: none;
-        padding: 0;
+        //元々のpaddingをリセット
+        padding-left: 0;
 
         li {
             display: flex;
@@ -23,40 +20,26 @@
             text-align: center;
             align-items: center;
             justify-content: center;
-            padding: 10px 20px;
+
+            height: 81px;
+            width: 86px;
             cursor: pointer;
-            border-radius: 0px;
-            color: $nomalgray;
+            color: $normalgray;
             font-weight: bold;
             font-size: 10px;
 
             svg {
-                font-size: 35px;
+                font-size: 37px;
+            }
+
+            span {
+                font-size: 27.75px;
             }
         }
+
+        .active {
+            background-color: $lightblack;
+        }        
     }
 }
 
-.active {
-    background-color: $lightbrack;
-    color: #fff;
-}
-
-.yy {
-    display: flex;
-    flex: 1;
-}
-
-.content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-
-    h2 {
-        margin-bottom: 10px;
-    }
-
-    p {
-        line-height: 1.6;
-    }
-}
