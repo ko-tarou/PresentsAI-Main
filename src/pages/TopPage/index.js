@@ -1,8 +1,12 @@
+import React from "react";
+import HeaderPage from "../HeaderPage/index.js";
+import styles from "../../styles/TopPage/TopPage.module.scss";
+
 export default function TopPage() {
 	return (
 		<div>
-			<h1>トップページ</h1>
-			<p>ここはトップページです。</p>
+			{/* ヘッダー */}
+			<HeaderPage />
 		</div>
 	);
 }
