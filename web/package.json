@@ -25,7 +25,8 @@
     "yjs": "^13.6.21",
     "y-websocket": "^3.0.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "lucide-react": "^0.525.0"
   },
   "devDependencies": {
     "@types/node": "^22",

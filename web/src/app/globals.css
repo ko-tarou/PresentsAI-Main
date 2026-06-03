@@ -1,3 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 8px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans text-content-primary bg-surface;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-border-strong; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-content-tertiary; }
+
+  /* Focus ring */
+  *:focus-visible {
+    outline: 2px solid #6366F1;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Button base */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 select-none;
+  }
+  .btn-sm { @apply btn h-8 px-3 text-xs; }
+  .btn-md { @apply btn h-9 px-4 text-sm; }
+  .btn-lg { @apply btn h-10 px-5 text-sm; }
+
+  .btn-primary { @apply bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm; }
+  .btn-secondary { @apply bg-surface border border-border text-content-primary hover:bg-surface-muted active:bg-surface-subtle shadow-sm; }
+  .btn-ghost { @apply text-content-secondary hover:bg-surface-muted hover:text-content-primary active:bg-surface-subtle; }
+  .btn-danger { @apply bg-error text-white hover:bg-red-600 active:bg-red-700 shadow-sm; }
+
+  /* Input base */
+  .input {
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-content-primary placeholder:text-content-tertiary transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:bg-surface-muted disabled:text-content-disabled;
+  }
+
+  /* Card */
+  .card {
+    @apply rounded-xl bg-surface shadow-card border border-border;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
