@@ -10,3 +10,4 @@ export { ViewOptions } from "./ViewOptions";
 export { TransitionPanel } from "./TransitionPanel";
 export { AutoLayoutButton } from "./AutoLayoutButton";
 export { ImageUploadButton } from "./ImageUploadButton";
+export { ZoomControls } from "./ZoomControls";

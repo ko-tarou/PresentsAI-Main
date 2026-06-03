@@ -16,6 +16,7 @@ import { ComponentPanel } from "../Toolbar/ComponentPanel";
 import { ExportButton } from "../Toolbar/ExportButton";
 import { ViewOptions } from "../Toolbar/ViewOptions";
 import { AutoLayoutButton } from "../Toolbar/AutoLayoutButton";
+import { ZoomControls } from "../Toolbar/ZoomControls";
 import type { EditorTool } from "@shared/types/slide";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
@@ -96,6 +97,7 @@ export function MenuBar() {
 
       {/* View */}
       <ViewOptions />
+      <ZoomControls />
 
       <div className="flex-1" />
 
