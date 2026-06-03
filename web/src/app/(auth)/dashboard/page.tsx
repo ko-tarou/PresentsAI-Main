@@ -41,19 +41,23 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="flex items-center justify-between border-b bg-white px-6 py-4">
+    <main role="main" className="min-h-screen bg-gray-50">
+      <a href="#dashboard-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 rounded bg-blue-600 px-3 py-1 text-sm text-white">
+        コンテンツへスキップ
+      </a>
+      <header role="banner" className="flex items-center justify-between border-b bg-white px-6 py-4">
         <h1 className="text-lg font-bold text-gray-900">PresentsAI</h1>
         <button
           onClick={handleCreate}
           disabled={creating}
+          aria-label="新しいプレゼンテーションを作成"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {creating ? "作成中..." : "+ 新しいプレゼンテーション"}
         </button>
       </header>
 
-      <div className="mx-auto max-w-6xl p-6">
+      <div id="dashboard-content" className="mx-auto max-w-6xl p-6">
         {loading ? (
           <div className="flex justify-center py-24">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
