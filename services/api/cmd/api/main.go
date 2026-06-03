@@ -55,6 +55,7 @@ func main() {
 	authHandler := infraHTTP.NewAuthHandler(authService)
 	presentationHandler := infraHTTP.NewPresentationHandler(presentationUC)
 	slideHandler := infraHTTP.NewSlideHandler(slideUC)
+	commentHandler := infraHTTP.NewCommentHandler(db)
 
 	r := mux.NewRouter()
 	r.Use(middleware.CORS)
@@ -81,6 +82,10 @@ func main() {
 	protected.HandleFunc("/presentations/{id}", presentationHandler.HandleGet).Methods(http.MethodGet)
 	protected.HandleFunc("/presentations/{id}", presentationHandler.HandleUpdate).Methods(http.MethodPut)
 	protected.HandleFunc("/presentations/{id}", presentationHandler.HandleDelete).Methods(http.MethodDelete)
+
+	// Comments
+	protected.HandleFunc("/presentations/{id}/comments", commentHandler.HandleList).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations/{id}/comments", commentHandler.HandleCreate).Methods(http.MethodPost)
 
 	// Slides
 	protected.HandleFunc("/presentations/{id}/slides", slideHandler.HandleList).Methods(http.MethodGet)

@@ -20,6 +20,7 @@ func Migrate(db *gorm.DB) error {
 		&RefreshTokenModel{},
 		&PresentationMemberModel{},
 		&AssetModel{},
+		&CommentModel{},
 	)
 	if err != nil {
 		return err
