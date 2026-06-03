@@ -14,9 +14,10 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { setCanvas, setDirty, setZoom, activeSlideId, presentationId } = useEditorStore();
-  const { slides, updateSlide } = useSlideStore();
-  const { accessToken } = useAuthStore();
+  const loadingRef = useRef(false); // suppress change events during programmatic load
+  const lastLoadedRef = useRef<string | null>(null);
+  const { setCanvas, setDirty, setZoom, activeSlideId } = useEditorStore();
+  const { updateSlide } = useSlideStore();
 
   const updateThumbnail = useCallback(async (canvas: Canvas, slideId: string) => {
     try {
@@ -49,6 +50,23 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
     }, AUTOSAVE_DELAY);
   }, [saveToServer]);
 
+  // Programmatically load a slide's content while suppressing change events,
+  // so loadFromJSON's object:added events do not re-enter onChanged/updateSlide.
+  const loadSlide = useCallback((canvas: Canvas, slideId: string) => {
+    const slide = useSlideStore.getState().slides.find((s) => s.id === slideId);
+    if (!slide?.content) return;
+    lastLoadedRef.current = slideId;
+    loadingRef.current = true;
+    loadFromJSON(canvas, slide.content as unknown as Record<string, unknown>)
+      .then(() => {
+        canvas.renderAll();
+        loadingRef.current = false;
+      })
+      .catch(() => {
+        loadingRef.current = false;
+      });
+  }, []);
+
   const initCanvas = useCallback((el: HTMLCanvasElement) => {
     if (fabricRef.current) fabricRef.current.dispose();
     const canvas = createCanvas(el);
@@ -56,6 +74,9 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
     setCanvas(canvas);
 
     const onChanged = () => {
+      // Ignore events fired by a programmatic loadFromJSON; otherwise the load
+      // would mutate `slides` and re-trigger itself = infinite loop.
+      if (loadingRef.current) return;
       setDirty(true);
       const { activeSlideId: sid } = useEditorStore.getState();
       if (sid) updateSlide(sid, toJSON(canvas));
@@ -71,7 +92,13 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
       const scale = fitToContainer(canvas, containerRef.current.clientWidth);
       setZoom(scale);
     }
-  }, [setCanvas, setDirty, setZoom, updateSlide, containerRef, scheduleAutoSave]);
+
+    // Initial load of the active slide once the canvas exists. The load effect
+    // below only fires on activeSlideId changes, so it may have already run
+    // (with fabricRef.current === null) before this ref callback. Load here.
+    const { activeSlideId: sid } = useEditorStore.getState();
+    if (sid) loadSlide(canvas, sid);
+  }, [setCanvas, setDirty, setZoom, updateSlide, containerRef, scheduleAutoSave, loadSlide]);
 
   // Resize observer
   useEffect(() => {
@@ -86,16 +113,14 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
     return () => ro.disconnect();
   }, [containerRef, setZoom]);
 
-  // Load slide content when active slide changes
+  // Load slide content ONLY when the active slide changes (not on content edits).
+  // Reads content via getState() so the effect does not depend on `slides`.
   useEffect(() => {
-    if (!fabricRef.current || !activeSlideId) return;
-    const slide = slides.find((s) => s.id === activeSlideId);
-    if (slide?.content) {
-      loadFromJSON(fabricRef.current, slide.content as unknown as Record<string, unknown>).then(() => {
-        fabricRef.current?.renderAll();
-      });
-    }
-  }, [activeSlideId, slides]);
+    const canvas = fabricRef.current;
+    if (!canvas || !activeSlideId) return;
+    if (lastLoadedRef.current === activeSlideId) return; // already loaded this slide
+    loadSlide(canvas, activeSlideId);
+  }, [activeSlideId, loadSlide]);
 
   // Cleanup autosave timer on unmount
   useEffect(() => {
