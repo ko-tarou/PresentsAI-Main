@@ -89,3 +89,15 @@ type AssetModel struct {
 }
 
 func (AssetModel) TableName() string { return "assets" }
+
+type CommentModel struct {
+	ID             string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	PresentationID string    `gorm:"type:uuid;not null;index"`
+	SlideID        string    `gorm:"type:uuid;index"`
+	AuthorID       string    `gorm:"type:uuid;not null"`
+	AuthorName     string    `gorm:"not null;default:''"`
+	Body           string    `gorm:"not null"`
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+}
+
+func (CommentModel) TableName() string { return "comments" }
