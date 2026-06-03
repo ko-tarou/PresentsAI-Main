@@ -101,3 +101,14 @@ type CommentModel struct {
 }
 
 func (CommentModel) TableName() string { return "comments" }
+
+type SlideVersionModel struct {
+	ID        string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	SlideID   string    `gorm:"type:uuid;not null;index"`
+	Version   int       `gorm:"not null"`
+	Content   JSONB     `gorm:"type:jsonb;not null"`
+	AuthorID  string    `gorm:"type:uuid"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+}
+
+func (SlideVersionModel) TableName() string { return "slide_versions" }
