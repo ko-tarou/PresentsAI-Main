@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { use } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Presentation, Bot, Mic } from "lucide-react";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { useEditorStore } from "@features/editor/stores/editorStore";
 import { useSlideStore } from "@features/editor/stores/slideStore";
@@ -21,6 +23,7 @@ type AITab = "ai" | "coach" | null;
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const { accessToken } = useAuthStore();
   const { setPresentationId, setActiveSlide, activeTool } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
@@ -39,24 +42,52 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }, [id, accessToken, setPresentationId, setSlides, setActiveSlide]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gray-100">
+    <div className="flex h-screen flex-col overflow-hidden bg-surface-subtle">
       {/* Header */}
-      <header className="flex h-11 items-center border-b bg-white px-4 shrink-0 gap-2">
-        <span className="text-sm font-bold text-gray-800">PresentsAI</span>
-        <span className="text-xs text-gray-400">({slides.length} スライド)</span>
+      <header className="flex h-12 items-center border-b border-border bg-surface px-4 shrink-0 gap-3">
+        {/* Back button */}
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center gap-1.5 text-sm text-content-secondary hover:text-content-primary transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        {/* Presentation title */}
+        <div className="flex items-center gap-2 min-w-0">
+          <Presentation className="h-4 w-4 text-primary-500 shrink-0" />
+          <span
+            className="text-sm font-semibold text-content-primary truncate max-w-48 cursor-pointer hover:text-primary-600"
+            title={title}
+          >
+            {title}
+          </span>
+          <span className="text-xs text-content-tertiary shrink-0">({slides.length} スライド)</span>
+        </div>
+
         <div className="flex-1" />
+
+        {/* Share button */}
         <ShareButton presentationId={id} presentationTitle={title} />
+
+        {/* AI toggles */}
         <button
           onClick={() => setAiTab(prev => prev === "ai" ? null : "ai")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${aiTab === "ai" ? "bg-purple-100 text-purple-700" : "text-gray-600 hover:bg-gray-100"}`}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            aiTab === "ai" ? "bg-primary-100 text-primary-700" : "text-content-secondary hover:bg-surface-muted hover:text-content-primary"
+          }`}
         >
-          🤖 AI
+          <Bot className="h-3.5 w-3.5" />
+          AI
         </button>
         <button
           onClick={() => setAiTab(prev => prev === "coach" ? null : "coach")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${aiTab === "coach" ? "bg-green-100 text-green-700" : "text-gray-600 hover:bg-gray-100"}`}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            aiTab === "coach" ? "bg-success/15 text-success-dark" : "text-content-secondary hover:bg-surface-muted hover:text-content-primary"
+          }`}
         >
-          🎙️ コーチ
+          <Mic className="h-3.5 w-3.5" />
+          コーチ
         </button>
       </header>
 

@@ -1,5 +1,11 @@
 "use client";
 import { useCallback } from "react";
+import {
+  Undo2, Redo2, MousePointer2, Type, Pen,
+  Copy, Trash2,
+  BringToFront, SendToBack,
+  Save,
+} from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useHistory } from "../../hooks/useHistory";
 import { usePenTool } from "../../hooks/usePenTool";
@@ -23,6 +29,33 @@ import { slidesApi } from "@shared/api/slides";
 import { toJSON } from "@lib/fabric/canvas";
 import type { SlideContent } from "@shared/types/slide";
 
+interface ToolButtonProps {
+  active?: boolean;
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+function ToolButton({ active, onClick, title, children }: ToolButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+        active
+          ? "bg-primary-100 text-primary-700"
+          : "text-content-secondary hover:bg-surface-muted hover:text-content-primary"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Divider() {
+  return <div className="mx-0.5 h-5 w-px shrink-0 bg-border" />;
+}
+
 export function MenuBar() {
   const { canvas, activeTool, setActiveTool, activeSlideId, presentationId, isDirty, setDirty } = useEditorStore();
   const { undo, redo } = useHistory();
@@ -30,7 +63,7 @@ export function MenuBar() {
   usePenTool();
   useKeyboardShortcuts();
 
-  const handleToolClick = useCallback((tool: EditorTool) => {
+  const setTool = useCallback((tool: EditorTool) => {
     setActiveTool(tool);
     if (!canvas) return;
     if (tool === "text") addText(canvas);
@@ -46,69 +79,64 @@ export function MenuBar() {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b bg-white px-2 py-1 min-h-10 shrink-0">
-      {/* Undo / Redo */}
-      <button onClick={undo} title="元に戻す (⌘Z)" className="rounded p-1.5 text-sm hover:bg-gray-100">↩</button>
-      <button onClick={redo} title="やり直し (⌘Y)" className="rounded p-1.5 text-sm hover:bg-gray-100">↪</button>
-      <div className="mx-1 h-5 w-px bg-gray-200" />
+    <div className="flex items-center gap-1 border-b border-border bg-surface px-3 py-1.5 shrink-0 overflow-x-auto">
+      {/* Undo/Redo */}
+      <ToolButton onClick={undo} title="元に戻す (⌘Z)"><Undo2 className="h-4 w-4" /></ToolButton>
+      <ToolButton onClick={redo} title="やり直し (⌘⇧Z)"><Redo2 className="h-4 w-4" /></ToolButton>
+      <Divider />
 
-      {/* Basic tools */}
-      {([
-        { tool: "select" as EditorTool, emoji: "🖱️", label: "選択 (V)" },
-        { tool: "text"   as EditorTool, emoji: "T",   label: "テキスト (T)" },
-        { tool: "pen"    as EditorTool, emoji: "✏️",  label: "ペン (P)" },
-      ]).map(({ tool, emoji, label }) => (
-        <button
-          key={tool}
-          onClick={() => handleToolClick(tool)}
-          title={label}
-          className={`rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
-            activeTool === tool ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          {emoji}
-        </button>
-      ))}
+      {/* Selection tools */}
+      <ToolButton active={activeTool === "select"} onClick={() => setTool("select")} title="選択 (V)">
+        <MousePointer2 className="h-4 w-4" />
+      </ToolButton>
+      <ToolButton active={activeTool === "text"} onClick={() => setTool("text")} title="テキスト (T)">
+        <Type className="h-4 w-4" />
+      </ToolButton>
+      <ToolButton active={activeTool === "pen"} onClick={() => setTool("pen")} title="ペン (P)">
+        <Pen className="h-4 w-4" />
+      </ToolButton>
+      <Divider />
 
-      <div className="mx-1 h-5 w-px bg-gray-200" />
-
-      {/* Shape / media inserts */}
+      {/* Insert */}
       <ShapeToolbar />
       <ImageUploadButton />
       <ChartButton />
       <TableButton />
-
-      <div className="mx-1 h-5 w-px bg-gray-200" />
+      <Divider />
 
       {/* Templates / Components */}
       <TemplatePanel />
       <ComponentPanel />
+      <Divider />
 
-      <div className="mx-1 h-5 w-px bg-gray-200" />
-
-      {/* Object actions */}
-      <button onClick={() => canvas && duplicateSelected(canvas)} title="複製 (⌘D)" className="rounded p-1.5 text-sm hover:bg-gray-100">📋</button>
-      <button onClick={() => canvas && deleteSelected(canvas)} title="削除 (Del)" className="rounded p-1.5 text-sm hover:bg-gray-100">🗑️</button>
-      <button onClick={() => canvas && bringToFront(canvas)} title="最前面へ (⌘])" className="rounded p-1.5 text-sm hover:bg-gray-100">⬆</button>
-      <button onClick={() => canvas && sendToBack(canvas)} title="最背面へ (⌘[)" className="rounded p-1.5 text-sm hover:bg-gray-100">⬇</button>
+      {/* Object operations */}
+      <ToolButton onClick={() => canvas && duplicateSelected(canvas)} title="複製 (⌘D)"><Copy className="h-4 w-4" /></ToolButton>
+      <ToolButton onClick={() => canvas && deleteSelected(canvas)} title="削除 (Del)"><Trash2 className="h-4 w-4" /></ToolButton>
+      <ToolButton onClick={() => canvas && bringToFront(canvas)} title="最前面 (⌘])"><BringToFront className="h-4 w-4" /></ToolButton>
+      <ToolButton onClick={() => canvas && sendToBack(canvas)} title="最背面 (⌘[)"><SendToBack className="h-4 w-4" /></ToolButton>
       <AutoLayoutButton />
-
-      <div className="mx-1 h-5 w-px bg-gray-200" />
+      <Divider />
 
       {/* View */}
       <ViewOptions />
       <ZoomControls />
 
-      <div className="flex-1" />
+      <div className="flex-1 min-w-4" />
 
-      {/* Export + Save */}
+      {/* Export */}
       <ExportButton />
+
+      {/* Save */}
       <button
         onClick={handleSave}
-        className={`ml-2 rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
-          isDirty ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-100 text-gray-400 cursor-default"
+        title="保存 (⌘S)"
+        className={`ml-1 flex items-center gap-1.5 rounded-lg px-3 h-8 text-sm font-medium transition-colors ${
+          isDirty
+            ? "bg-primary-600 text-white hover:bg-primary-700 shadow-sm"
+            : "bg-surface-muted text-content-tertiary cursor-default"
         }`}
       >
+        <Save className="h-3.5 w-3.5" />
         {isDirty ? "保存" : "保存済み"}
       </button>
     </div>
