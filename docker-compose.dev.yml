@@ -72,6 +72,7 @@ services:
       NEXT_PUBLIC_COLLAB_URL: ws://localhost/ws/collab
       NEXT_PUBLIC_REALTIME_URL: ws://localhost/ws/realtime
       NEXT_PUBLIC_ASSETS_URL: http://localhost/assets
+      NEXT_PUBLIC_LLM_GATEWAY_URL: http://localhost:4242/v1
       INTERNAL_API_URL: http://api:8080
     ports:
       - "3000:3000"
