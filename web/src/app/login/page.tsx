@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogIn, UserPlus, Presentation } from "lucide-react";
 import { authApi } from "@shared/api/auth";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
+import { Button } from "@shared/components/ui/Button";
+import { Input } from "@shared/components/ui/Input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,61 +36,126 @@ export default function LoginPage() {
   }
 
   return (
-    <main role="main" className="flex min-h-screen items-center justify-center bg-gray-50">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 rounded bg-blue-600 px-3 py-1 text-sm text-white">
-        コンテンツへスキップ
-      </a>
-      <div id="main-content" className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">PresentsAI</h1>
-        <div className="mb-6 flex rounded-lg bg-gray-100 p-1">
-          {(["login", "register"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
-                tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {t === "login" ? "ログイン" : "新規登録"}
-            </button>
+    <div className="flex min-h-screen">
+      {/* Left panel — brand */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center bg-primary-600 px-12 text-white">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+            <Presentation className="h-6 w-6 text-white" />
+          </div>
+          <span className="text-2xl font-bold tracking-tight">PresentsAI</span>
+        </div>
+        <h1 className="text-4xl font-bold text-center leading-tight mb-4">
+          プレゼンを、<br />もっとスマートに。
+        </h1>
+        <p className="text-primary-200 text-center text-lg leading-relaxed max-w-sm">
+          AI が発表を支援するプレゼンテーションエディタ。
+          スライド作成から発表まで、すべてをひとつの場所で。
+        </p>
+        <div className="mt-12 grid grid-cols-3 gap-6 text-center">
+          {[
+            { value: "∞", label: "スライド" },
+            { value: "AI", label: "リアルタイムコーチ" },
+            { value: "4", label: "エクスポート形式" },
+          ].map(({ value, label }) => (
+            <div key={label}>
+              <p className="text-3xl font-bold">{value}</p>
+              <p className="text-sm text-primary-200 mt-1">{label}</p>
+            </div>
           ))}
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {tab === "register" && (
-            <input
-              type="text"
-              placeholder="表示名"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-            />
-          )}
-          <input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          <input
-            type="password"
-            placeholder={tab === "register" ? "パスワード（8文字以上）" : "パスワード"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "処理中..." : tab === "login" ? "ログイン" : "アカウント作成"}
-          </button>
-        </form>
       </div>
-    </main>
+
+      {/* Right panel — form */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-surface-subtle px-6 py-12">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <Presentation className="h-6 w-6 text-primary-600" />
+            <span className="text-xl font-bold text-content-primary">PresentsAI</span>
+          </div>
+
+          <div className="card p-8">
+            <h2 className="text-xl font-bold text-content-primary mb-1">
+              {tab === "login" ? "ログイン" : "アカウント作成"}
+            </h2>
+            <p className="text-sm text-content-secondary mb-6">
+              {tab === "login"
+                ? "アカウントにサインインしてください"
+                : "新しいアカウントを作成します"}
+            </p>
+
+            {/* Tabs */}
+            <div className="flex rounded-lg bg-surface-muted p-1 mb-6">
+              {(["login", "register"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => { setTab(t); setError(""); }}
+                  className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${
+                    tab === t
+                      ? "bg-white text-content-primary shadow-sm"
+                      : "text-content-secondary hover:text-content-primary"
+                  }`}
+                >
+                  {t === "login" ? "ログイン" : "新規登録"}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {tab === "register" && (
+                <Input
+                  label="表示名"
+                  type="text"
+                  placeholder="田中 太郎"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                />
+              )}
+              <Input
+                label="メールアドレス"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+              <Input
+                label="パスワード"
+                type="password"
+                placeholder={tab === "register" ? "8文字以上" : "パスワードを入力"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete={tab === "login" ? "current-password" : "new-password"}
+                hint={tab === "register" ? "8文字以上で設定してください" : undefined}
+              />
+
+              {error && (
+                <div className="rounded-lg bg-error-light border border-error/20 px-3 py-2.5 text-sm text-error-dark flex items-center gap-2">
+                  <span>&#x26A0;</span>
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                loading={loading}
+                className="w-full mt-2"
+              >
+                {tab === "login" ? (
+                  <><LogIn className="h-4 w-4" /> ログイン</>
+                ) : (
+                  <><UserPlus className="h-4 w-4" /> アカウントを作成</>
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
