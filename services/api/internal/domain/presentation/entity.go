@@ -9,13 +9,13 @@ import (
 type ID string
 
 type Presentation struct {
-	ID           ID
-	OwnerID      user.ID
-	Title        string
-	ThumbnailURL string
-	SlideCount   int
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           ID        `json:"id"`
+	OwnerID      user.ID   `json:"ownerId"`
+	Title        string    `json:"title"`
+	ThumbnailURL string    `json:"thumbnailUrl"`
+	SlideCount   int       `json:"slideCount"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 func New(ownerID user.ID, title string) *Presentation {

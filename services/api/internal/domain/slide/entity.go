@@ -13,14 +13,14 @@ type ID string
 type Content map[string]interface{}
 
 type Slide struct {
-	ID             ID
-	PresentationID presentation.ID
-	Position       int
-	ThumbnailURL   string
-	Notes          string
-	Content        Content
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID             ID              `json:"id"`
+	PresentationID presentation.ID `json:"presentationId"`
+	Position       int             `json:"position"`
+	ThumbnailURL   string          `json:"thumbnailUrl"`
+	Notes          string          `json:"notes"`
+	Content        Content         `json:"content"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
 }
 
 func New(presentationID presentation.ID, position int) *Slide {

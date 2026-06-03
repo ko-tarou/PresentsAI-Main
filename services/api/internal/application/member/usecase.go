@@ -10,13 +10,13 @@ import (
 )
 
 type Member struct {
-	ID             string
-	PresentationID string
-	UserID         string
-	Email          string
-	DisplayName    string
-	Role           string
-	CreatedAt      string
+	ID             string `json:"id"`
+	PresentationID string `json:"presentationId"`
+	UserID         string `json:"userId"`
+	Email          string `json:"email"`
+	DisplayName    string `json:"displayName"`
+	Role           string `json:"role"`
+	CreatedAt      string `json:"createdAt"`
 }
 
 type Repository interface {
