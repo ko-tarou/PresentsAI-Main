@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
@@ -112,10 +113,15 @@ func (s *AuthService) issueTokenPair(ctx context.Context, userID string) (*Token
 		return nil, err
 	}
 
+	jti, err := randomJTI()
+	if err != nil {
+		return nil, err
+	}
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userID,
 		"iat": now.Unix(),
 		"exp": now.Add(refreshTokenTTL).Unix(),
+		"jti": jti,
 	}).SignedString([]byte(s.refreshSec))
 	if err != nil {
 		return nil, err
@@ -136,4 +142,15 @@ func (s *AuthService) issueTokenPair(ctx context.Context, userID string) (*Token
 func hashToken(token string) string {
 	h := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(h[:])
+}
+
+// randomJTI returns a random token identifier so that two refresh tokens
+// issued for the same user within the same second are never identical
+// (which would otherwise collide on their hash and break rotation).
+func randomJTI() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
