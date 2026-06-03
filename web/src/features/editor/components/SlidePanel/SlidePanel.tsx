@@ -45,7 +45,22 @@ export function SlidePanel() {
                 i === currentIndex ? "border-blue-500" : "border-transparent hover:border-gray-300"
               }`}
             >
-              <div className="w-full rounded bg-white" style={{ aspectRatio: `${SLIDE_WIDTH}/${SLIDE_HEIGHT}` }} />
+              <div
+                className="w-full rounded bg-white overflow-hidden"
+                style={{ aspectRatio: `${SLIDE_WIDTH}/${SLIDE_HEIGHT}` }}
+              >
+                {slide.thumbnailUrl ? (
+                  <img
+                    src={slide.thumbnailUrl}
+                    alt={`スライド ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <span className="text-xs text-gray-300">{i + 1}</span>
+                  </div>
+                )}
+              </div>
               <span className="absolute bottom-1 left-1 text-xs text-gray-400">{i + 1}</span>
             </button>
             <button

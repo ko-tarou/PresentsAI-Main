@@ -18,13 +18,25 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
   const { slides, updateSlide } = useSlideStore();
   const { accessToken } = useAuthStore();
 
+  const updateThumbnail = useCallback(async (canvas: Canvas, slideId: string) => {
+    try {
+      const { generateThumbnail, uploadThumbnailDataURL } = await import("@lib/fabric/thumbnail");
+      const dataURL = generateThumbnail(canvas);
+      const url = await uploadThumbnailDataURL(dataURL, slideId);
+      if (url) {
+        useSlideStore.getState().updateSlide(slideId, { thumbnailUrl: url });
+      }
+    } catch { /* ignore thumbnail errors */ }
+  }, []);
+
   const saveToServer = useCallback(async (canvas: Canvas, slideId: string, presId: string, token: string) => {
     try {
       const content = toJSON(canvas) as unknown as SlideContent;
       await slidesApi.updateContent(token, presId, slideId, content);
       setDirty(false);
+      void updateThumbnail(canvas, slideId);
     } catch { /* ignore network errors during auto-save */ }
-  }, [setDirty]);
+  }, [setDirty, updateThumbnail]);
 
   const scheduleAutoSave = useCallback((canvas: Canvas) => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
