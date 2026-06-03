@@ -1,38 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PresentsAI
 
-## Getting Started
+AI-powered presentation editor built with Next.js, Fabric.js, and Go microservices.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Canvas-based slide editor (Fabric.js v6) with full object manipulation
+- AI content generation and real-time speech coaching via LFM2 local model
+- Collaborative editing via WebSocket
+- Real-time presenter-to-audience slide sync
+- Export to PDF, PNG, SVG, and PPTX
+- Design tokens (colors, text styles), component library, auto-layout
+- Bezier pen tool, node editor, boolean path operations
+- Image filters (brightness, blur, grayscale)
+- Slide version history with restore
+- Comment system per presentation/slide
+- Keyboard shortcuts, accessibility (ARIA), and responsive design
+
+## Architecture
+
+```
+PresentsAI/
+├── web/                    # Next.js 15 frontend (App Router)
+├── services/
+│   ├── api/                # Go REST API (Gorilla Mux + GORM + PostgreSQL)
+│   ├── collab/             # Go WebSocket collaboration service (:8081)
+│   ├── realtime/           # Go WebSocket presenter-viewer sync (:8082)
+│   └── assets/             # Go static asset service (:8083)
+└── infra/
+    └── nginx/              # Reverse proxy routing
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 15, TypeScript, Tailwind CSS |
+| Canvas | Fabric.js v6 |
+| AI | LFM2-2.6B via local OpenAI-compatible gateway |
+| API | Go 1.23, Gorilla Mux, GORM |
+| Database | PostgreSQL (uuid-ossp, JSONB) |
+| Auth | JWT (access + refresh tokens) |
+| Realtime | WebSocket (gorilla/websocket) |
+| Infra | Docker Compose, Nginx |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Quick Start
 
-## Learn More
+**Prerequisites:** Docker, Docker Compose, Node.js 20+, Go 1.23+
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Start all services (API, DB, Collab, Realtime, Nginx)
+make dev
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Or individually:
+cd web && npm install && npm run dev   # Frontend at :3000
+cd services/api && go run ./cmd/api   # API at :8080
+cd services/collab && go run ./cmd/collab   # Collab WS at :8081
+cd services/realtime && go run ./cmd/realtime  # Realtime WS at :8082
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## AI Features Setup
 
-## Deploy on Vercel
+The AI coaching and content generation require a local LFM2 gateway:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Start LFM2 gateway on port 4242 (OpenAI-compatible)
+# Example using LM Studio or similar:
+# Set NEXT_PUBLIC_LLM_GATEWAY_URL=http://localhost:4242/v1
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# PresentsAI-Main
-PresentsAIを長期間作成する用のリポジトリ
+# Real-time coaching uses Web Speech API (Chrome/Edge only)
+```
+
+## Environment Variables
+
+```env
+# services/api/.env
+DATABASE_URL=postgres://user:pass@localhost:5432/presentsai
+JWT_SECRET=your-secret
+JWT_REFRESH_SECRET=your-refresh-secret
+PORT=8080
+
+# web/.env.local
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_COLLAB_URL=ws://localhost:8081
+NEXT_PUBLIC_REALTIME_URL=ws://localhost:8082
+NEXT_PUBLIC_LLM_GATEWAY_URL=http://localhost:4242/v1
+```
+
+## PR History (021-040)
+
+| PR | Feature |
+|----|---------|
+| 021 | Real-time AI speech coaching with filler word detection |
+| 022 | Post-presentation AI report with score and feedback |
+| 023 | WebSocket presenter-to-audience slide sync service |
+| 024 | Comment system (per presentation/slide) |
+| 025 | Slide version history with restore |
+| 026 | Bezier pen tool with path preview |
+| 027 | Node/vertex editor for path manipulation |
+| 028 | Boolean path operations (union/subtract/intersect/exclude) |
+| 029 | Reusable component library with save/instantiate |
+| 030 | Auto-layout and distribute alignment tools |
+| 031 | Design token system (colors, text styles) |
+| 032 | Freehand drawing mode and SVG import |
+| 033 | Rich text (bullet lists, line height, letter spacing) |
+| 034 | Image filters (brightness, blur, grayscale) |
+| 035 | Slide add/delete from slide panel with API sync |
+| 036 | Comprehensive keyboard shortcuts |
+| 037 | Presentation share link button |
+| 038 | Accessibility (ARIA labels, roles, skip links) |
+| 039 | Dashboard search and sort for presentations |
+| 040 | README documentation update |
