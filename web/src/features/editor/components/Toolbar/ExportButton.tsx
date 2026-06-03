@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Download, FileText, FileImage, FileCode, Presentation } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { exportToPDF } from "@lib/export/pdf";
 import { exportToPNG, exportToSVG } from "@lib/export/png";
@@ -13,22 +14,30 @@ export function ExportButton() {
     if (!canvas) return; setBusy(true); setOpen(false);
     try { await fn(); } finally { setBusy(false); }
   }
+  const OPTIONS = [
+    { l: "PDF として保存", Icon: FileText, fn: () => exportToPDF(canvas!) },
+    { l: "PNG として保存", Icon: FileImage, fn: () => exportToPNG(canvas!) },
+    { l: "SVG として保存", Icon: FileCode, fn: () => exportToSVG(canvas!) },
+    { l: "PPTX として保存", Icon: Presentation, fn: () => exportToPPTX(canvas!) },
+  ];
   return (
     <div className="relative">
-      <button onClick={()=>setOpen(!open)} disabled={busy} className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50">
-        {busy?"出力中...":"⬇ エクスポート"}
+      <button onClick={()=>setOpen(!open)} disabled={busy}
+        className="btn btn-secondary btn-sm gap-1.5 disabled:opacity-50">
+        <Download className="h-4 w-4" />{busy?"出力中...":"エクスポート"}
       </button>
       {open && (
-        <div className="absolute right-0 top-10 z-10 rounded-xl border bg-white shadow-lg w-44">
-          {[
-            {l:"PDF として保存", fn:()=>exportToPDF(canvas!)},
-            {l:"PNG として保存", fn:()=>exportToPNG(canvas!)},
-            {l:"SVG として保存", fn:()=>exportToSVG(canvas!)},
-            {l:"PPTX として保存", fn:()=>exportToPPTX(canvas!)},
-          ].map(({l,fn})=>(
-            <button key={l} onClick={()=>run(fn)} className="block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 first:rounded-t-xl last:rounded-b-xl">{l}</button>
-          ))}
-        </div>
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-10 z-20 w-44 rounded-xl border border-border bg-surface p-1 shadow-modal">
+            {OPTIONS.map(({l,Icon,fn})=>(
+              <button key={l} onClick={()=>run(fn)}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-content-secondary hover:bg-primary-50 hover:text-primary-600 transition-colors">
+                <Icon className="h-4 w-4" />{l}
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,32 +1,41 @@
 "use client";
+import { useState } from "react";
+import { Shapes, Square, Circle, Triangle, Minus, ArrowRight, Star, Diamond } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { addShape, type ShapeType } from "@lib/fabric/tools/shapes";
 
-const SHAPES: { type: ShapeType; label: string; emoji: string }[] = [
-  { type: "rect", label: "矩形", emoji: "⬜" },
-  { type: "circle", label: "円", emoji: "⭕" },
-  { type: "triangle", label: "三角形", emoji: "🔺" },
-  { type: "line", label: "直線", emoji: "➖" },
-  { type: "arrow", label: "矢印", emoji: "➡️" },
-  { type: "star", label: "星", emoji: "⭐" },
-  { type: "diamond", label: "菱形", emoji: "🔷" },
+const SHAPES: { type: ShapeType; label: string; Icon: typeof Square }[] = [
+  { type: "rect", label: "矩形", Icon: Square },
+  { type: "circle", label: "円", Icon: Circle },
+  { type: "triangle", label: "三角形", Icon: Triangle },
+  { type: "line", label: "直線", Icon: Minus },
+  { type: "arrow", label: "矢印", Icon: ArrowRight },
+  { type: "star", label: "星", Icon: Star },
+  { type: "diamond", label: "菱形", Icon: Diamond },
 ];
 
 export function ShapeToolbar() {
   const { canvas } = useEditorStore();
-
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-wrap gap-1 p-2">
-      {SHAPES.map(({ type, label, emoji }) => (
-        <button
-          key={type}
-          onClick={() => canvas && addShape(canvas, type)}
-          title={label}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-lg hover:bg-blue-50 hover:ring-1 hover:ring-blue-300"
-        >
-          {emoji}
-        </button>
-      ))}
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} title="図形"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-content-secondary hover:bg-surface-muted hover:text-content-primary transition-colors">
+        <Shapes className="h-4 w-4" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-10 z-20 grid grid-cols-4 gap-1 rounded-xl border border-border bg-surface p-2 shadow-modal">
+            {SHAPES.map(({ type, label, Icon }) => (
+              <button key={type} onClick={() => { canvas && addShape(canvas, type); setOpen(false); }} title={label}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-content-secondary hover:bg-primary-50 hover:text-primary-600 transition-colors">
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

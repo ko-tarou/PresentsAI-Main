@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 
 export function useRequireAuth() {
-  const { accessToken } = useAuthStore();
+  const { accessToken, hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!accessToken) {
+    if (hasHydrated && !accessToken) {
       router.replace("/login");
     }
-  }, [accessToken, router]);
+  }, [accessToken, hasHydrated, router]);
 
-  return { isAuthenticated: !!accessToken };
+  return { isAuthenticated: !!accessToken, isReady: hasHydrated };
 }

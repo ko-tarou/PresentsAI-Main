@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { BarChart3, CheckCircle2, TrendingUp } from "lucide-react";
 import { generateJSON } from "@lib/ai/client";
 
 interface Report {
@@ -29,30 +30,32 @@ export function PresentationReport({ transcript }: { transcript: string }) {
 
   return (
     <div className="p-4 space-y-4">
-      <h2 className="text-sm font-semibold text-gray-700">📊 発表後レポート</h2>
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-content-primary">
+        <BarChart3 className="h-4 w-4 text-primary-600" /> 発表後レポート
+      </h2>
       <button onClick={generate} disabled={loading || !transcript.trim()}
-        className="w-full rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+        className="btn btn-primary w-full disabled:opacity-50">
         {loading ? "分析中..." : "レポートを生成"}
       </button>
       {report && (
         <div className="space-y-3">
-          <div className="rounded-xl bg-blue-50 p-3">
+          <div className="rounded-xl bg-primary-50 p-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-blue-700">総合スコア</span>
-              <span className="text-2xl font-bold text-blue-700">{report.score}</span>
+              <span className="text-xs font-medium text-primary-700">総合スコア</span>
+              <span className="text-2xl font-bold text-primary-700">{report.score}</span>
             </div>
-            <p className="text-xs text-blue-600">{report.summary}</p>
+            <p className="text-xs text-primary-600">{report.summary}</p>
           </div>
           {report.strengths.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-green-700 mb-1">✅ 良かった点</p>
-              {report.strengths.map((s,i)=><p key={i} className="text-xs text-gray-600">• {s}</p>)}
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-success-dark"><CheckCircle2 className="h-3.5 w-3.5" /> 良かった点</p>
+              {report.strengths.map((s,i)=><p key={i} className="text-xs text-content-secondary">• {s}</p>)}
             </div>
           )}
           {report.improvements.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-orange-700 mb-1">📈 改善点</p>
-              {report.improvements.map((s,i)=><p key={i} className="text-xs text-gray-600">• {s}</p>)}
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-warning-dark"><TrendingUp className="h-3.5 w-3.5" /> 改善点</p>
+              {report.improvements.map((s,i)=><p key={i} className="text-xs text-content-secondary">• {s}</p>)}
             </div>
           )}
         </div>

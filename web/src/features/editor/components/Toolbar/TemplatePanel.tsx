@@ -1,9 +1,17 @@
 "use client";
 import { useState } from "react";
+import { LayoutTemplate, Square, Heading, Columns2, Moon } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useSlideStore } from "../../stores/slideStore";
 import { BUILT_IN_TEMPLATES } from "@lib/fabric/templates";
 import type { SlideContent } from "@shared/types/slide";
+
+const TEMPLATE_ICONS: Record<string, typeof Square> = {
+  blank: Square,
+  title: Heading,
+  "two-col": Columns2,
+  dark: Moon,
+};
 
 export function TemplatePanel() {
   const { canvas, activeSlideId } = useEditorStore();
@@ -16,16 +24,26 @@ export function TemplatePanel() {
   }
   return (
     <div className="relative">
-      <button onClick={()=>setOpen(!open)} className="flex h-10 items-center gap-1 rounded-lg px-3 text-sm hover:bg-blue-50" title="テンプレート">📑<span className="text-xs">テンプレ</span></button>
+      <button onClick={()=>setOpen(!open)} title="テンプレート"
+        className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-content-secondary hover:bg-surface-muted hover:text-content-primary transition-colors">
+        <LayoutTemplate className="h-4 w-4" /><span className="text-xs">テンプレ</span>
+      </button>
       {open && (
-        <div className="absolute left-0 top-12 z-10 grid grid-cols-2 gap-2 rounded-xl border bg-white shadow-lg p-3 w-60">
-          {BUILT_IN_TEMPLATES.map(t=>(
-            <button key={t.id} onClick={()=>apply(t.content)} className="flex flex-col items-center gap-1 rounded-lg border p-3 text-xs hover:bg-blue-50 hover:border-blue-300">
-              <span className="text-2xl">{t.thumbnail}</span>
-              <span className="text-gray-600">{t.name}</span>
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-10 z-20 grid w-60 grid-cols-2 gap-2 rounded-xl border border-border bg-surface p-3 shadow-modal">
+            {BUILT_IN_TEMPLATES.map(t=>{
+              const Icon = TEMPLATE_ICONS[t.id] ?? Square;
+              return (
+                <button key={t.id} onClick={()=>apply(t.content)}
+                  className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-xs text-content-secondary hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 transition-colors">
+                  <Icon className="h-6 w-6" />
+                  <span>{t.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
