@@ -39,10 +39,10 @@ export function MenuBar() {
   }
 
   return (
-    <div className="flex items-center gap-1 border-b bg-white px-3 py-1.5">
+    <div role="toolbar" aria-label="エディタツールバー" className="flex items-center gap-1 border-b bg-white px-3 py-1.5">
       {/* Undo / Redo */}
-      <button onClick={undo} title="元に戻す (⌘Z)" className="rounded p-1.5 text-sm hover:bg-gray-100">↩</button>
-      <button onClick={redo} title="やり直し (⌘Y)" className="rounded p-1.5 text-sm hover:bg-gray-100">↪</button>
+      <button onClick={undo} title="元に戻す (⌘Z)" aria-label="元に戻す" className="rounded p-1.5 text-sm hover:bg-gray-100">↩</button>
+      <button onClick={redo} title="やり直し (⌘Y)" aria-label="やり直し" className="rounded p-1.5 text-sm hover:bg-gray-100">↪</button>
       <div className="mx-2 h-4 w-px bg-gray-200" />
 
       {/* Tool buttons */}
@@ -62,10 +62,10 @@ export function MenuBar() {
       <div className="mx-2 h-4 w-px bg-gray-200" />
 
       {/* Object actions */}
-      <button onClick={() => canvas && duplicateSelected(canvas)} title="複製" className="rounded p-1.5 text-sm hover:bg-gray-100">📋</button>
-      <button onClick={() => canvas && deleteSelected(canvas)} title="削除 (Del)" className="rounded p-1.5 text-sm hover:bg-gray-100">🗑️</button>
-      <button onClick={() => canvas && bringForward(canvas)} title="前面へ" className="rounded p-1.5 text-sm hover:bg-gray-100">⬆</button>
-      <button onClick={() => canvas && sendBackward(canvas)} title="背面へ" className="rounded p-1.5 text-sm hover:bg-gray-100">⬇</button>
+      <button onClick={() => canvas && duplicateSelected(canvas)} title="複製" aria-label="複製" className="rounded p-1.5 text-sm hover:bg-gray-100">📋</button>
+      <button onClick={() => canvas && deleteSelected(canvas)} title="削除 (Del)" aria-label="削除" className="rounded p-1.5 text-sm hover:bg-gray-100">🗑️</button>
+      <button onClick={() => canvas && bringForward(canvas)} title="前面へ" aria-label="前面へ移動" className="rounded p-1.5 text-sm hover:bg-gray-100">⬆</button>
+      <button onClick={() => canvas && sendBackward(canvas)} title="背面へ" aria-label="背面へ移動" className="rounded p-1.5 text-sm hover:bg-gray-100">⬇</button>
 
       <div className="flex-1" />
 

@@ -33,8 +33,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
+    <main role="main" className="flex min-h-screen items-center justify-center bg-gray-50">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 rounded bg-blue-600 px-3 py-1 text-sm text-white">
+        コンテンツへスキップ
+      </a>
+      <div id="main-content" className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
         <h1 className="mb-6 text-2xl font-bold text-gray-900">PresentsAI</h1>
         <div className="mb-6 flex rounded-lg bg-gray-100 p-1">
           {(["login", "register"] as const).map((t) => (
