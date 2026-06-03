@@ -67,6 +67,15 @@ func (uc *UseCase) UpdateContent(ctx context.Context, id, ownerID string, conten
 	return s, uc.repo.Update(ctx, s)
 }
 
+func (uc *UseCase) UpdateNotes(ctx context.Context, id, ownerID, notes string) (*domainSlide.Slide, error) {
+	s, err := uc.Get(ctx, id, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	s.Notes = notes
+	return s, uc.repo.Update(ctx, s)
+}
+
 func (uc *UseCase) Delete(ctx context.Context, id, ownerID string) error {
 	if _, err := uc.Get(ctx, id, ownerID); err != nil {
 		return err

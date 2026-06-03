@@ -12,6 +12,7 @@ export interface Slide {
   presentationId: string;
   position: number;
   thumbnailUrl?: string;
+  notes?: string;
   content: SlideContent;
   createdAt: string;
   updatedAt: string;

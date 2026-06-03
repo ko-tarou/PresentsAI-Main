@@ -30,4 +30,8 @@ export const slidesApi = {
     apiClient.put<void>(`/presentations/${presentationId}/slides/reorder`, { positions }, {
       headers: authHeaders(token),
     }),
+  updateNotes: (token: string, presentationId: string, slideId: string, notes: string) =>
+    apiClient.patch<Slide>(`/presentations/${presentationId}/slides/${slideId}/notes`, { notes }, {
+      headers: authHeaders(token),
+    }),
 };

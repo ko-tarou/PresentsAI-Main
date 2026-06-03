@@ -69,6 +69,7 @@ func (r *slideRepository) Update(ctx context.Context, s *domainSlide.Slide) erro
 		Updates(map[string]interface{}{
 			"content":       JSONB(s.Content),
 			"thumbnail_url": s.ThumbnailURL,
+			"notes":         s.Notes,
 		}).Error
 }
 
@@ -95,6 +96,7 @@ func modelToSlide(m *SlideModel) *domainSlide.Slide {
 		PresentationID: domainPresentation.ID(m.PresentationID),
 		Position:       m.Position,
 		ThumbnailURL:   m.ThumbnailURL,
+		Notes:          m.Notes,
 		Content:        domainSlide.Content(m.Content),
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,

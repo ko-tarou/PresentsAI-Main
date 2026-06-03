@@ -17,6 +17,7 @@ type Slide struct {
 	PresentationID presentation.ID
 	Position       int
 	ThumbnailURL   string
+	Notes          string
 	Content        Content
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

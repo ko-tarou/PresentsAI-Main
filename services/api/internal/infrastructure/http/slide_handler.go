@@ -80,6 +80,24 @@ func (h *SlideHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *SlideHandler) HandleUpdateNotes(w http.ResponseWriter, r *http.Request) {
+	ownerID := r.Context().Value(middleware.UserIDKey).(string)
+	id := mux.Vars(r)["slideId"]
+	var req struct {
+		Notes string `json:"notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid body")
+		return
+	}
+	s, err := h.uc.UpdateNotes(r.Context(), id, ownerID, req.Notes)
+	if err != nil {
+		writeHTTPError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, s)
+}
+
 func (h *SlideHandler) HandleReorder(w http.ResponseWriter, r *http.Request) {
 	ownerID := r.Context().Value(middleware.UserIDKey).(string)
 	presentationID := mux.Vars(r)["id"]
