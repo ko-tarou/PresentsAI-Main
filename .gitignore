@@ -44,6 +44,7 @@ next-env.d.ts
 services/*/uploads/
 services/*/.env
 services/*/bin/
+services/assets/assets
 
 # Frontend
 web/.next/
