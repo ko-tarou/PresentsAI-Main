@@ -50,6 +50,7 @@ type SlideModel struct {
 	PresentationID string    `gorm:"type:uuid;not null;index"`
 	Position       int       `gorm:"not null;default:0"`
 	ThumbnailURL   string    `gorm:"default:''"`
+	Notes          string    `gorm:"not null;default:''"`
 	Content        JSONB     `gorm:"type:jsonb;not null;default:'{}'"`
 	CreatedAt      time.Time `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime"`

@@ -12,6 +12,7 @@ import { TextFormatBar, BooleanToolbar } from "@features/editor/components/Toolb
 import { StylePanel, TokenPanel, ImagePanel } from "@features/editor/components/PropertyPanel";
 import { AIPanel } from "@features/ai/components/AIPanel";
 import { RealtimeCoach } from "@features/ai/components/RealtimeCoach";
+import { SpeakerNotesPanel } from "@features/editor/components/SpeakerNotes";
 import type { Slide } from "@shared/types/slide";
 
 type AITab = "ai" | "coach" | null;
@@ -62,8 +63,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
         <SlidePanel />
-        <main className="flex-1 overflow-hidden">
-          <EditorCanvas />
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            <EditorCanvas />
+          </div>
+          <SpeakerNotesPanel />
         </main>
         <aside className="flex w-56 shrink-0 flex-col border-l bg-white overflow-y-auto">
           <StylePanel />

@@ -95,6 +95,7 @@ func main() {
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleGet).Methods(http.MethodGet)
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleUpdate).Methods(http.MethodPut)
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleDelete).Methods(http.MethodDelete)
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}/notes", slideHandler.HandleUpdateNotes).Methods(http.MethodPatch)
 
 	// Slide versions
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions", versionHandler.HandleList).Methods(http.MethodGet)
