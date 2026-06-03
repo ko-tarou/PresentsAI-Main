@@ -5,8 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	appUser "github.com/ko-tarou/presentsai/services/api/internal/application/user"
 	"github.com/ko-tarou/presentsai/services/api/internal/infrastructure/http/middleware"
 	sharedErr "github.com/ko-tarou/presentsai/services/api/internal/shared/errors"
@@ -20,14 +18,7 @@ func NewAuthHandler(authService *appUser.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
-func (h *AuthHandler) Register(r *mux.Router) {
-	r.HandleFunc("/auth/register", h.register).Methods(http.MethodPost)
-	r.HandleFunc("/auth/login", h.login).Methods(http.MethodPost)
-	r.HandleFunc("/auth/refresh", h.refresh).Methods(http.MethodPost)
-	r.HandleFunc("/auth/logout", h.logout).Methods(http.MethodPost)
-}
-
-func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email       string `json:"email"`
 		Password    string `json:"password"`
@@ -39,6 +30,10 @@ func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Email == "" || req.Password == "" {
 		writeError(w, http.StatusBadRequest, "email and password are required")
+		return
+	}
+	if len(req.Password) < 8 {
+		writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
 		return
 	}
 
@@ -55,7 +50,7 @@ func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, pair)
 }
 
-func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -78,7 +73,7 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, pair)
 }
 
-func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RefreshToken string `json:"refreshToken"`
 	}
@@ -96,9 +91,10 @@ func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, pair)
 }
 
-func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
+// HandleLogout requires Auth middleware to be applied upstream (sets UserIDKey in context).
+func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
-	if !ok {
+	if !ok || userID == "" {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
