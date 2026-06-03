@@ -93,6 +93,24 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"id": id, "url": url, "filename": filename})
 	}).Methods(http.MethodPost)
 
+	// Delete file
+	r.HandleFunc("/files/{filename}", func(w http.ResponseWriter, r *http.Request) {
+		filename := mux.Vars(r)["filename"]
+		// Sanitize: only allow alphanumeric, hyphen, underscore, and dot
+		for _, c := range filename {
+			if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.') {
+				http.Error(w, `{"error":"invalid filename"}`, http.StatusBadRequest)
+				return
+			}
+		}
+		path := filepath.Join(storagePath, filename)
+		if err := os.Remove(path); err != nil {
+			http.Error(w, `{"error":"file not found"}`, http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}).Methods(http.MethodDelete)
+
 	// Serve files
 	r.PathPrefix("/files/").Handler(http.StripPrefix("/files/", http.FileServer(http.Dir(storagePath))))
 
