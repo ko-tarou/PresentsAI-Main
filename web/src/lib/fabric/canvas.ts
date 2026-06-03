@@ -21,11 +21,9 @@ export function createCanvas(el: HTMLCanvasElement, opts?: Partial<CanvasOptions
 }
 
 export function loadFromJSON(canvas: Canvas, json: Record<string, unknown>): Promise<Canvas> {
-  return new Promise((resolve) => {
-    canvas.loadFromJSON(json, () => {
-      canvas.renderAll();
-      resolve(canvas);
-    });
+  return canvas.loadFromJSON(json).then((c) => {
+    c.renderAll();
+    return c;
   });
 }
 
