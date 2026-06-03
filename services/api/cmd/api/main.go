@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -18,6 +22,13 @@ import (
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
+	}
+
+	// Fix #2: Validate JWT secrets on startup
+	jwtSecret := os.Getenv("JWT_SECRET")
+	refreshSecret := os.Getenv("JWT_REFRESH_SECRET")
+	if jwtSecret == "" || refreshSecret == "" {
+		log.Fatal("JWT_SECRET and JWT_REFRESH_SECRET must be set")
 	}
 
 	db, err := postgres.Connect()
@@ -44,20 +55,44 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "service": "presentsai-api"})
 	}).Methods(http.MethodGet)
 
-	// Auth routes (no auth required)
+	// Public auth routes (no JWT required)
 	authHandler := infraHTTP.NewAuthHandler(authService)
-	authHandler.Register(r)
+	r.HandleFunc("/auth/register", authHandler.HandleRegister).Methods(http.MethodPost)
+	r.HandleFunc("/auth/login", authHandler.HandleLogin).Methods(http.MethodPost)
+	r.HandleFunc("/auth/refresh", authHandler.HandleRefresh).Methods(http.MethodPost)
+
+	// Fix #1: Protected routes — Apply Auth middleware
+	protected := r.PathPrefix("").Subrouter()
+	protected.Use(middleware.Auth(jwtSecret))
+	protected.HandleFunc("/auth/logout", authHandler.HandleLogout).Methods(http.MethodPost)
+	// Future protected routes go here (PR-004: presentations, slides, etc.)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	jwtSecret := os.Getenv("JWT_SECRET")
-	_ = jwtSecret // will be used when adding protected routes in PR-004
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: r,
+	}
+
+	// Graceful shutdown
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+		<-quit
+		log.Println("Shutting down server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("Server forced to shutdown: %v", err)
+		}
+	}()
 
 	log.Printf("api service starting on :%s", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
+	log.Println("Server stopped")
 }
