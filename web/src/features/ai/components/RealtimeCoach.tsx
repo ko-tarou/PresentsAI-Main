@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Mic, Play, Square, Type, Gauge, Lightbulb } from "lucide-react";
 import { generateText } from "@lib/ai/client";
 
 interface CoachingHint { text: string; type: "speed" | "filler" | "tip"; }
@@ -110,38 +111,40 @@ export function RealtimeCoach() {
 
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
-      <h2 className="text-sm font-semibold text-gray-700">🎙️ リアルタイム AI コーチ</h2>
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-content-primary">
+        <Mic className="h-4 w-4 text-primary-600" /> リアルタイム AI コーチ
+      </h2>
 
-      <div className="flex items-center justify-between rounded-xl bg-gray-100 p-3">
+      <div className="flex items-center justify-between rounded-xl bg-surface-muted p-3">
         <div>
-          <p className="text-xs text-gray-500">経過時間</p>
-          <p className="font-mono text-lg font-bold text-gray-800">{fmt(elapsed)}</p>
+          <p className="text-xs text-content-tertiary">経過時間</p>
+          <p className="font-mono text-lg font-bold text-content-primary">{fmt(elapsed)}</p>
         </div>
         <button
           onClick={active ? stopCoaching : startCoaching}
-          className={`rounded-full px-4 py-2 text-sm font-semibold text-white ${active ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
+          className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors ${active ? "bg-error hover:bg-error-dark" : "bg-success hover:bg-success-dark"}`}
         >
-          {active ? "⏹ 停止" : "▶ 開始"}
+          {active ? <><Square className="h-4 w-4" /> 停止</> : <><Play className="h-4 w-4" /> 開始</>}
         </button>
       </div>
 
       {transcript && (
-        <div className="rounded-lg bg-blue-50 p-2 text-xs text-blue-700 italic">
+        <div className="rounded-lg bg-primary-50 p-2 text-xs italic text-primary-700">
           "{transcript}"
         </div>
       )}
 
       <div className="flex-1 space-y-2 overflow-y-auto">
         {hints.length === 0 ? (
-          <p className="text-xs text-gray-400">コーチングを開始すると、ここにリアルタイムアドバイスが表示されます</p>
+          <p className="text-xs text-content-tertiary">コーチングを開始すると、ここにリアルタイムアドバイスが表示されます</p>
         ) : (
           hints.map((h, i) => (
-            <div key={i} className={`rounded-lg p-2 text-xs ${
-              h.type==="filler" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" :
-              h.type==="speed" ? "bg-orange-50 text-orange-700 border border-orange-200" :
-              "bg-green-50 text-green-700 border border-green-200"
+            <div key={i} className={`flex items-center gap-1.5 rounded-lg border p-2 text-xs ${
+              h.type==="filler" ? "border-warning-light bg-warning-light text-warning-dark" :
+              h.type==="speed" ? "border-warning-light bg-warning-light text-warning-dark" :
+              "border-success-light bg-success-light text-success-dark"
             }`}>
-              {h.type==="filler"?"🔤":h.type==="speed"?"⚡":"💡"} {h.text}
+              {h.type==="filler"?<Type className="h-3.5 w-3.5 shrink-0" />:h.type==="speed"?<Gauge className="h-3.5 w-3.5 shrink-0" />:<Lightbulb className="h-3.5 w-3.5 shrink-0" />} {h.text}
             </div>
           ))
         )}

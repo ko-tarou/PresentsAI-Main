@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Grid3x3, Magnet } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { toggleGrid, enableSnap } from "@lib/fabric/grid";
 
@@ -17,9 +18,9 @@ export function ViewOptions() {
     if (next) enableSnap(canvas);
   }
   return (
-    <div className="flex items-center gap-3 px-3 py-1 text-xs text-gray-600 border-b">
-      <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={showGrid} onChange={handleGrid} className="rounded" />グリッド</label>
-      <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={snapEnabled} onChange={handleSnap} className="rounded" />スナップ</label>
+    <div className="flex items-center gap-3 border-b border-border px-3 py-1 text-xs text-content-secondary">
+      <label className="flex cursor-pointer items-center gap-1.5"><input type="checkbox" checked={showGrid} onChange={handleGrid} className="rounded" /><Grid3x3 className="h-3.5 w-3.5" />グリッド</label>
+      <label className="flex cursor-pointer items-center gap-1.5"><input type="checkbox" checked={snapEnabled} onChange={handleSnap} className="rounded" /><Magnet className="h-3.5 w-3.5" />スナップ</label>
     </div>
   );
 }

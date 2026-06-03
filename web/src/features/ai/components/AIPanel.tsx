@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Bot } from "lucide-react";
 import { useEditorStore } from "@features/editor/stores/editorStore";
 import { generateText, generateJSON } from "@lib/ai/client";
 import { Textbox } from "fabric";
@@ -38,22 +39,24 @@ export function AIPanel() {
 
   return (
     <div className="flex flex-col h-full p-4 gap-3">
-      <h2 className="text-sm font-semibold text-gray-700">🤖 AI アシスタント</h2>
-      <p className="text-xs text-gray-400">LFM2-2.6B ローカル</p>
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-content-primary">
+        <Bot className="h-4 w-4 text-primary-600" /> AI アシスタント
+      </h2>
+      <p className="text-xs text-content-tertiary">LFM2-2.6B ローカル</p>
       <div className="flex gap-1">
         {(["improve","generate","outline"] as const).map(m=>(
-          <button key={m} onClick={()=>setMode(m)} className={`flex-1 rounded py-1 text-xs font-medium ${mode===m?"bg-blue-600 text-white":"bg-gray-100 text-gray-600"}`}>
+          <button key={m} onClick={()=>setMode(m)} className={`flex-1 rounded-lg py-1 text-xs font-medium transition-colors ${mode===m?"bg-primary-600 text-white":"bg-surface-muted text-content-secondary hover:bg-surface-subtle"}`}>
             {m==="improve"?"改善":m==="generate"?"生成":"アウトライン"}
           </button>
         ))}
       </div>
       <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} rows={4}
         placeholder={mode==="outline"?"テーマを入力...":"テキストを入力..."}
-        className="flex-1 rounded-lg border p-3 text-sm resize-none focus:border-blue-500 focus:outline-none"/>
-      <button onClick={run} disabled={loading||!prompt.trim()} className="rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+        className="input flex-1 resize-none p-3 text-sm"/>
+      <button onClick={run} disabled={loading||!prompt.trim()} className="btn btn-primary w-full disabled:opacity-50">
         {loading?"生成中...":"実行"}
       </button>
-      {result && <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-700 max-h-40 overflow-y-auto whitespace-pre-wrap">{result}</div>}
+      {result && <div className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-surface-muted p-3 text-xs text-content-secondary">{result}</div>}
     </div>
   );
 }

@@ -5,8 +5,10 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   userId: string | null;
+  hasHydrated: boolean;
   setTokens: (access: string, refresh: string) => void;
   clearTokens: () => void;
+  setHasHydrated: (v: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -15,6 +17,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       userId: null,
+      hasHydrated: false,
       setTokens: (access, refresh) => {
         try {
           const payload = JSON.parse(atob(access.split(".")[1]));
@@ -25,7 +28,13 @@ export const useAuthStore = create<AuthState>()(
       },
       clearTokens: () =>
         set({ accessToken: null, refreshToken: null, userId: null }),
+      setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
-    { name: "presentsai-auth" }
+    {
+      name: "presentsai-auth",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    }
   )
 );
