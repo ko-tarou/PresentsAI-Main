@@ -5,6 +5,8 @@ import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { useEditorStore } from "@features/editor/stores/editorStore";
 import { useSlideStore } from "@features/editor/stores/slideStore";
 import { slidesApi } from "@shared/api/slides";
+import { presentationsApi } from "@shared/api/presentations";
+import { ShareButton } from "@features/dashboard/components/ShareButton";
 import { EditorCanvas } from "@features/editor/components/Canvas";
 import { SlidePanel } from "@features/editor/components/SlidePanel";
 import { MenuBar } from "@features/editor/components/MenuBar";
@@ -23,6 +25,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { setPresentationId, setActiveSlide, activeTool } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
+  const [title, setTitle] = useState("Untitled");
 
   useEffect(() => {
     if (!accessToken || !id) return;
@@ -32,6 +35,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       setSlides(slideList);
       if (slideList.length > 0) setActiveSlide(slideList[0].id);
     });
+    presentationsApi.get(accessToken, id).then(p => setTitle(p.title));
   }, [id, accessToken, setPresentationId, setSlides, setActiveSlide]);
 
   return (
@@ -41,6 +45,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         <span className="text-sm font-bold text-gray-800">PresentsAI</span>
         <span className="text-xs text-gray-400">({slides.length} スライド)</span>
         <div className="flex-1" />
+        <ShareButton presentationId={id} presentationTitle={title} />
         <button
           onClick={() => setAiTab(prev => prev === "ai" ? null : "ai")}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${aiTab === "ai" ? "bg-purple-100 text-purple-700" : "text-gray-600 hover:bg-gray-100"}`}

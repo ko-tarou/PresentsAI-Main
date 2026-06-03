@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 
+	appMember "github.com/ko-tarou/presentsai/services/api/internal/application/member"
 	appPresentation "github.com/ko-tarou/presentsai/services/api/internal/application/presentation"
 	appSlide "github.com/ko-tarou/presentsai/services/api/internal/application/slide"
 	appUser "github.com/ko-tarou/presentsai/services/api/internal/application/user"
@@ -50,6 +51,8 @@ func main() {
 	authService := appUser.NewAuthService(userRepo, refreshRepo)
 	presentationUC := appPresentation.NewUseCase(presentationRepo, slideRepo)
 	slideUC := appSlide.NewUseCase(slideRepo, presentationRepo)
+	memberRepo := postgres.NewMemberRepository(db)
+	memberUC := appMember.NewUseCase(memberRepo, presentationRepo, userRepo)
 
 	// Handlers
 	authHandler := infraHTTP.NewAuthHandler(authService)
@@ -57,6 +60,7 @@ func main() {
 	slideHandler := infraHTTP.NewSlideHandler(slideUC)
 	commentHandler := infraHTTP.NewCommentHandler(db)
 	versionHandler := infraHTTP.NewVersionHandler(db)
+	memberHandler := infraHTTP.NewMemberHandler(memberUC)
 
 	r := mux.NewRouter()
 	r.Use(middleware.CORS)
@@ -101,6 +105,12 @@ func main() {
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions", versionHandler.HandleList).Methods(http.MethodGet)
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions", versionHandler.HandleCreate).Methods(http.MethodPost)
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions/{versionId}/restore", versionHandler.HandleRestore).Methods(http.MethodPost)
+
+	// Members
+	protected.HandleFunc("/presentations/{id}/members", memberHandler.HandleList).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations/{id}/members", memberHandler.HandleInvite).Methods(http.MethodPost)
+	protected.HandleFunc("/presentations/{id}/members/{userId}", memberHandler.HandleUpdateRole).Methods(http.MethodPut)
+	protected.HandleFunc("/presentations/{id}/members/{userId}", memberHandler.HandleRemove).Methods(http.MethodDelete)
 
 	port := os.Getenv("PORT")
 	if port == "" {

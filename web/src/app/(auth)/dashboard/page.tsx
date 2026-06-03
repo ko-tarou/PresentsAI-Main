@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { presentationsApi, type Presentation } from "@shared/api/presentations";
+import { ShareButton } from "@features/dashboard/components/ShareButton";
 
 export default function DashboardPage() {
   const { accessToken } = useAuthStore();
@@ -122,13 +123,16 @@ export default function DashboardPage() {
                     {new Date(p.updatedAt).toLocaleDateString("ja-JP")}
                   </p>
                 </button>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="absolute right-2 top-2 hidden rounded-md p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 group-hover:block"
-                  aria-label="削除"
-                >
-                  ✕
-                </button>
+                <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
+                  <ShareButton presentationId={p.id} presentationTitle={p.title} />
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="rounded-md p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                    aria-label="削除"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>
