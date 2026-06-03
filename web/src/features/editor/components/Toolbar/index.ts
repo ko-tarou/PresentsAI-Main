@@ -1,1 +1,12 @@
 export { TextFormatBar } from "./TextFormatBar";
+export { ShapeToolbar } from "./ShapeToolbar";
+export { ChartButton } from "./ChartButton";
+export { TableButton } from "./TableButton";
+export { ExportButton } from "./ExportButton";
+export { TemplatePanel } from "./TemplatePanel";
+export { ComponentPanel } from "./ComponentPanel";
+export { BooleanToolbar } from "./BooleanToolbar";
+export { ViewOptions } from "./ViewOptions";
+export { TransitionPanel } from "./TransitionPanel";
+export { AutoLayoutButton } from "./AutoLayoutButton";
+export { ImageUploadButton } from "./ImageUploadButton";
