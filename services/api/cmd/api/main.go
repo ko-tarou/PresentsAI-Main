@@ -56,6 +56,7 @@ func main() {
 	presentationHandler := infraHTTP.NewPresentationHandler(presentationUC)
 	slideHandler := infraHTTP.NewSlideHandler(slideUC)
 	commentHandler := infraHTTP.NewCommentHandler(db)
+	versionHandler := infraHTTP.NewVersionHandler(db)
 
 	r := mux.NewRouter()
 	r.Use(middleware.CORS)
@@ -94,6 +95,11 @@ func main() {
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleGet).Methods(http.MethodGet)
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleUpdate).Methods(http.MethodPut)
 	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleDelete).Methods(http.MethodDelete)
+
+	// Slide versions
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions", versionHandler.HandleList).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions", versionHandler.HandleCreate).Methods(http.MethodPost)
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}/versions/{versionId}/restore", versionHandler.HandleRestore).Methods(http.MethodPost)
 
 	port := os.Getenv("PORT")
 	if port == "" {
