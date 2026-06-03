@@ -9,6 +9,7 @@ import { EditorCanvas } from "@features/editor/components/Canvas";
 import { SlidePanel } from "@features/editor/components/SlidePanel";
 import { MenuBar } from "@features/editor/components/MenuBar";
 import { TextFormatBar } from "@features/editor/components/Toolbar";
+import { StylePanel } from "@features/editor/components/PropertyPanel";
 import type { Slide } from "@shared/types/slide";
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,6 +39,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       <div className="flex flex-1 overflow-hidden">
         <SlidePanel />
         <EditorCanvas />
+        <StylePanel />
       </div>
     </div>
   );
