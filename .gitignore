@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Services build artifacts
+services/*/uploads/
+services/*/.env
+services/*/bin/
+
+# Frontend
+web/.next/
+web/node_modules/
+
+# Uploads
+uploads/
