@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 
+	appPresentation "github.com/ko-tarou/presentsai/services/api/internal/application/presentation"
+	appSlide "github.com/ko-tarou/presentsai/services/api/internal/application/slide"
 	appUser "github.com/ko-tarou/presentsai/services/api/internal/application/user"
 	infraHTTP "github.com/ko-tarou/presentsai/services/api/internal/infrastructure/http"
 	"github.com/ko-tarou/presentsai/services/api/internal/infrastructure/http/middleware"
@@ -24,7 +26,6 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Fix #2: Validate JWT secrets on startup
 	jwtSecret := os.Getenv("JWT_SECRET")
 	refreshSecret := os.Getenv("JWT_REFRESH_SECRET")
 	if jwtSecret == "" || refreshSecret == "" {
@@ -42,11 +43,19 @@ func main() {
 	// Repositories
 	userRepo := postgres.NewUserRepository(db)
 	refreshRepo := postgres.NewRefreshTokenRepository(db)
+	presentationRepo := postgres.NewPresentationRepository(db)
+	slideRepo := postgres.NewSlideRepository(db)
 
-	// Services
+	// Use cases
 	authService := appUser.NewAuthService(userRepo, refreshRepo)
+	presentationUC := appPresentation.NewUseCase(presentationRepo, slideRepo)
+	slideUC := appSlide.NewUseCase(slideRepo, presentationRepo)
 
-	// Router
+	// Handlers
+	authHandler := infraHTTP.NewAuthHandler(authService)
+	presentationHandler := infraHTTP.NewPresentationHandler(presentationUC)
+	slideHandler := infraHTTP.NewSlideHandler(slideUC)
+
 	r := mux.NewRouter()
 	r.Use(middleware.CORS)
 	r.Use(middleware.JSON)
@@ -55,29 +64,39 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "service": "presentsai-api"})
 	}).Methods(http.MethodGet)
 
-	// Public auth routes (no JWT required)
-	authHandler := infraHTTP.NewAuthHandler(authService)
+	// Public auth routes
 	r.HandleFunc("/auth/register", authHandler.HandleRegister).Methods(http.MethodPost)
 	r.HandleFunc("/auth/login", authHandler.HandleLogin).Methods(http.MethodPost)
 	r.HandleFunc("/auth/refresh", authHandler.HandleRefresh).Methods(http.MethodPost)
 
-	// Fix #1: Protected routes — Apply Auth middleware
+	// Protected routes
 	protected := r.PathPrefix("").Subrouter()
 	protected.Use(middleware.Auth(jwtSecret))
+
 	protected.HandleFunc("/auth/logout", authHandler.HandleLogout).Methods(http.MethodPost)
-	// Future protected routes go here (PR-004: presentations, slides, etc.)
+
+	// Presentations
+	protected.HandleFunc("/presentations", presentationHandler.HandleList).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations", presentationHandler.HandleCreate).Methods(http.MethodPost)
+	protected.HandleFunc("/presentations/{id}", presentationHandler.HandleGet).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations/{id}", presentationHandler.HandleUpdate).Methods(http.MethodPut)
+	protected.HandleFunc("/presentations/{id}", presentationHandler.HandleDelete).Methods(http.MethodDelete)
+
+	// Slides
+	protected.HandleFunc("/presentations/{id}/slides", slideHandler.HandleList).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations/{id}/slides", slideHandler.HandleCreate).Methods(http.MethodPost)
+	protected.HandleFunc("/presentations/{id}/slides/reorder", slideHandler.HandleReorder).Methods(http.MethodPut)
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleGet).Methods(http.MethodGet)
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleUpdate).Methods(http.MethodPut)
+	protected.HandleFunc("/presentations/{id}/slides/{slideId}", slideHandler.HandleDelete).Methods(http.MethodDelete)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: r,
-	}
+	srv := &http.Server{Addr: ":" + port, Handler: r}
 
-	// Graceful shutdown
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
