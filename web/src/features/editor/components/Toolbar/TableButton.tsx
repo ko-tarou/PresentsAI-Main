@@ -14,10 +14,11 @@ export function TableButton() {
     <Popover
       align="left"
       trigger={({ toggle, ref }) => (
-        <span ref={ref as (el: HTMLSpanElement | null) => void} className="inline-flex">
+        <span ref={ref as (el: HTMLSpanElement | null) => void} className="inline-flex h-full">
           <button onClick={toggle} title="テーブル"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-content-secondary hover:bg-surface-muted hover:text-content-primary transition-colors">
-            <Table className="h-4 w-4" />
+            className="flex h-full min-w-14 flex-col items-center justify-center gap-1 rounded-md px-2 py-1 text-content-secondary hover:bg-surface-muted hover:text-content-primary transition-colors">
+            <Table className="h-5 w-5" />
+            <span className="text-[11px] leading-tight">表</span>
           </button>
         </span>
       )}
