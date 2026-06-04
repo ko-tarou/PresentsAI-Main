@@ -36,12 +36,12 @@ export function Ribbon() {
   usePenTool();
   useKeyboardShortcuts();
   return (
-    <div className="shrink-0 border-b border-border bg-surface">
+    <div className="shrink-0 border-b border-border bg-[#F3F2F1]">
       <Backstage open={backstageOpen} onClose={() => setBackstageOpen(false)} />
       {/* Tab strip — allow horizontal scroll if the 9 tabs exceed the width */}
-      <div className="flex items-center gap-1 overflow-x-auto px-2 pt-1">
+      <div className="flex items-center gap-1 overflow-x-auto bg-[#F3F2F1] px-2 pt-1">
         <button onClick={() => setBackstageOpen(true)}
-          className="shrink-0 rounded-t-md bg-primary-600 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-primary-700">
+          className="shrink-0 rounded-t-md bg-[#C43E1C] px-3 py-1.5 text-[13px] font-medium text-white hover:bg-[#A33216]">
           ファイル
         </button>
         {TABS.map(t => (
@@ -49,7 +49,7 @@ export function Ribbon() {
             className={
               "shrink-0 rounded-t-md px-3 py-1.5 text-[13px] font-medium transition-colors " +
               (tab === t.key
-                ? "bg-surface-subtle text-primary-700 border-t-2 border-primary-600"
+                ? "bg-[#F3F2F1] text-[#C43E1C] border-t-2 border-[#C43E1C]"
                 : "border-t-2 border-transparent text-content-secondary hover:bg-surface-muted hover:text-content-primary")
             }>
             {t.label}
@@ -57,7 +57,7 @@ export function Ribbon() {
         ))}
       </div>
       {/* Active panel */}
-      <div className="flex h-[88px] items-stretch bg-surface-subtle px-2 py-1 overflow-x-auto">
+      <div className="flex h-[88px] items-stretch bg-[#F3F2F1] px-2 py-1 overflow-x-auto">
         {tab === "home" && <HomeTab />}
         {tab === "insert" && <InsertTab />}
         {tab === "draw" && <DrawTab />}

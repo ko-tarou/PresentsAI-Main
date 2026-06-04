@@ -6,7 +6,7 @@ export function RibbonGroup({ label, children }: { label?: string; children: Rea
   return (
     <div className="flex h-full flex-col items-center px-2">
       <div className="flex flex-1 items-center gap-0.5">{children}</div>
-      {label && <span className="mt-0.5 text-[10px] leading-none text-content-tertiary">{label}</span>}
+      {label && <span className="mt-0.5 text-[10px] leading-none text-[#605E5C]">{label}</span>}
     </div>
   );
 }
@@ -23,7 +23,7 @@ export function RibbonBigButton({
     <button onClick={onClick} disabled={disabled} title={title ?? label} data-testid={testId}
       className={clsx(
         "flex h-full min-w-14 flex-col items-center justify-center gap-1 rounded-md px-2 py-1 text-content-secondary transition-colors",
-        active ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted hover:text-content-primary",
+        active ? "bg-[#FBE9E3] text-[#C43E1C]" : "hover:bg-[#EDEBE9] hover:text-content-primary",
         disabled && "pointer-events-none opacity-40"
       )}>
       <span className="[&>svg]:h-5 [&>svg]:w-5">{icon}</span>
@@ -40,7 +40,7 @@ export function RibbonIconButton({
     <button onClick={onClick} disabled={disabled} title={title}
       className={clsx(
         "flex h-7 w-7 items-center justify-center rounded transition-colors",
-        active ? "bg-primary-100 text-primary-700" : "text-content-secondary hover:bg-surface-muted hover:text-content-primary",
+        active ? "bg-[#FBE9E3] text-[#C43E1C]" : "text-content-secondary hover:bg-[#EDEBE9] hover:text-content-primary",
         disabled && "pointer-events-none opacity-40"
       )}>
       <span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>

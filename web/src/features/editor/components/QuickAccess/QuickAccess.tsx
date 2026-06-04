@@ -44,7 +44,7 @@ export function QuickAccess() {
         disabled={!canvas}
         className={`flex h-7 items-center gap-1 rounded px-2 text-xs font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none ${
           isDirty
-            ? "text-primary-700 hover:bg-primary-100"
+            ? "text-white bg-[#C43E1C] hover:bg-[#A33216]"
             : "text-content-tertiary hover:bg-surface-muted"
         }`}
       >
