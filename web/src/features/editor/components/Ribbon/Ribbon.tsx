@@ -49,8 +49,8 @@ export function Ribbon() {
             className={
               "shrink-0 rounded-t-md px-3 py-1.5 text-[13px] font-medium transition-colors " +
               (tab === t.key
-                ? "bg-surface-subtle text-primary-700 border-b-2 border-primary-600"
-                : "text-content-secondary hover:bg-surface-muted hover:text-content-primary")
+                ? "bg-surface-subtle text-primary-700 border-t-2 border-primary-600"
+                : "border-t-2 border-transparent text-content-secondary hover:bg-surface-muted hover:text-content-primary")
             }>
             {t.label}
           </button>

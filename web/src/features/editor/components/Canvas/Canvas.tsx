@@ -46,7 +46,7 @@ export function EditorCanvas() {
     <div
       ref={containerRef}
       onContextMenu={handleContextMenu}
-      className="flex h-full items-center justify-center bg-gray-200 p-8"
+      className="flex h-full items-center justify-center bg-[#525252] p-8"
     >
       {/* Single grid; rulers occupy the first row/column only when enabled.
           The canvas element is rendered exactly once and never remounts on
@@ -70,7 +70,7 @@ export function EditorCanvas() {
           </>
         )}
         {/* Canvas (stable element — keyed so React never remounts it on toggle) */}
-        <div key="canvas-wrapper" className="shadow-xl">
+        <div key="canvas-wrapper" className="bg-white shadow-2xl">
           <canvas
             ref={(el) => {
               if (el && !canvasRef.current) {
