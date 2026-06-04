@@ -21,6 +21,10 @@ export function createCanvas(el: HTMLCanvasElement, opts?: Partial<CanvasOptions
     backgroundColor: opts?.backgroundColor ?? "#ffffff",
     selection: true,
     preserveObjectStacking: true,
+    // PowerPoint: dragging a corner scales freely by default, and holding Shift
+    // constrains to uniform (aspect-locked) scaling. Fabric v6 defaults to the
+    // opposite (uniform by default, Shift = free), so flip it here.
+    uniformScaling: false,
   });
   return canvas;
 }

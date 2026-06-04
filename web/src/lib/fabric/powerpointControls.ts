@@ -1,4 +1,11 @@
-import { Canvas, FabricObject, InteractiveFabricObject, Textbox } from "fabric";
+import {
+  Canvas,
+  FabricObject,
+  FabricImage,
+  IText,
+  InteractiveFabricObject,
+  Textbox,
+} from "fabric";
 
 /**
  * Configure Fabric v6 global defaults so object selection / resize behaves like
@@ -26,6 +33,9 @@ export function applyPowerPointControls() {
     ...FabricObject.ownDefaults,
     // Keep stroke/outline width constant while scaling (PowerPoint behavior).
     strokeUniform: true,
+    // PowerPoint never mirrors an object when you drag a corner past the
+    // opposite edge; it clamps instead. Prevent negative-flip on resize.
+    lockScalingFlip: true,
   };
 }
 
@@ -62,5 +72,64 @@ export function applyControlsToCanvas(canvas: Canvas) {
   canvas.getObjects().forEach((o) => {
     (o as FabricObject).set?.("strokeUniform", true);
     if (o instanceof Textbox) configureTextboxNoDistort(o);
+  });
+}
+
+/**
+ * Wire canvas-level interaction events to mirror PowerPoint behavior:
+ *
+ *  - Rotation snaps to the nearest 15° when within ~7° of a multiple of 15°,
+ *    matching the snap PowerPoint shows while rotating. Holding Shift forces
+ *    exact 15° steps regardless of proximity.
+ *  - Double-clicking a non-text, non-image shape spawns a centered editable
+ *    IText so shapes can "hold text" the way PowerPoint shapes do. If the
+ *    double-clicked target is already an IText/Textbox/Image, we do nothing so
+ *    Fabric's own text editing kicks in.
+ *
+ * Idempotent: a flag on the canvas guards against attaching the listeners more
+ * than once (e.g. if initCanvas runs again).
+ */
+export function enablePowerPointInteractions(canvas: Canvas) {
+  const c = canvas as Canvas & { __ppInteractions?: boolean };
+  if (c.__ppInteractions) return;
+  c.__ppInteractions = true;
+
+  // Behavior 1 — rotation snaps to 15° increments.
+  canvas.on("object:rotating", (e) => {
+    const o = e.target;
+    if (!o) return;
+    const a = o.angle ?? 0;
+    const snap = Math.round(a / 15) * 15;
+    const shift = (e.e as MouseEvent | undefined)?.shiftKey;
+    if (shift || Math.abs(a - snap) < 7) {
+      o.set("angle", snap);
+    }
+  });
+
+  // Behavior 3 — double-click a shape to add centered editable text inside it.
+  canvas.on("mouse:dblclick", (e) => {
+    const target = e.target;
+    if (!target) return;
+    // Let Fabric handle native editing for text objects; ignore images.
+    if (target instanceof IText || target instanceof Textbox || target instanceof FabricImage) {
+      return;
+    }
+    const center = target.getCenterPoint();
+    const itext = new IText("テキスト", {
+      fontSize: 24,
+      fontFamily: "sans-serif",
+      fill: "#000000",
+      textAlign: "center",
+      originX: "center",
+      originY: "center",
+      left: center.x,
+      top: center.y,
+      editable: true,
+    });
+    canvas.add(itext);
+    canvas.setActiveObject(itext);
+    itext.enterEditing();
+    itext.selectAll();
+    canvas.requestRenderAll();
   });
 }

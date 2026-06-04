@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { Canvas } from "fabric";
 import { createCanvas, loadFromJSON, toJSON, fitToContainer } from "@lib/fabric/canvas";
 import { enableSmartGuides } from "@lib/fabric/smartGuides";
+import { enablePowerPointInteractions } from "@lib/fabric/powerpointControls";
 import { useEditorStore } from "../stores/editorStore";
 import { useSlideStore } from "../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
@@ -76,6 +77,9 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
 
     // PowerPoint-style alignment guides while dragging (editor-only).
     enableSmartGuides(canvas);
+
+    // PowerPoint-style interactions: 15° rotation snap + double-click shape text.
+    enablePowerPointInteractions(canvas);
 
     const onChanged = () => {
       // Ignore events fired by a programmatic loadFromJSON; otherwise the load
