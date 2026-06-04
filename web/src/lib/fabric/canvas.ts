@@ -20,7 +20,7 @@ export function createCanvas(el: HTMLCanvasElement, opts?: Partial<CanvasOptions
   return canvas;
 }
 
-export function loadFromJSON(canvas: Canvas, json: Record<string, unknown>): Promise<Canvas> {
+export function loadFromJSON(canvas: Canvas, json: object): Promise<Canvas> {
   return canvas.loadFromJSON(json).then((c) => {
     c.renderAll();
     return c;

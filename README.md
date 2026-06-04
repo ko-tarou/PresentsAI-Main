@@ -1,6 +1,18 @@
 # PresentsAI
 
+![CI](https://github.com/ko-tarou/PresentsAI-Main/actions/workflows/ci.yml/badge.svg)
+
 AI-powered presentation editor built with Next.js, Fabric.js, and Go microservices.
+
+## Testing
+
+| Layer | Tool | Command |
+|-------|------|---------|
+| Web unit | Vitest + Testing Library | `cd web && npm test` |
+| Go unit | go test | `cd services/api && go test ./...` |
+| E2E | Playwright | `cd e2e && npm test` (stack must be running) |
+
+CI runs all of the above on every PR via GitHub Actions (`.github/workflows/ci.yml`).
 
 ## Features
 

@@ -25,7 +25,7 @@ export default function PresentPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     if (!canvasRef.current || !slides[cur]) return;
     const c = createCanvas(canvasRef.current, { width: SLIDE_WIDTH / 2, height: SLIDE_HEIGHT / 2 });
-    loadFromJSON(c, slides[cur].content as Record<string, unknown>);
+    loadFromJSON(c, slides[cur].content);
     return () => { c.dispose(); };
   }, [cur, slides]);
 
