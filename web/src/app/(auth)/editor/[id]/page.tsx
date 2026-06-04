@@ -11,8 +11,9 @@ import { presentationsApi } from "@shared/api/presentations";
 import { ShareButton } from "@features/dashboard/components/ShareButton";
 import { EditorCanvas } from "@features/editor/components/Canvas";
 import { SlidePanel } from "@features/editor/components/SlidePanel";
-import { MenuBar } from "@features/editor/components/MenuBar";
-import { TextFormatBar, BooleanToolbar } from "@features/editor/components/Toolbar";
+import { Ribbon } from "@features/editor/components/Ribbon";
+import { StatusBar } from "@features/editor/components/StatusBar";
+import { BooleanToolbar } from "@features/editor/components/Toolbar";
 import { StylePanel, TokenPanel, ImagePanel } from "@features/editor/components/PropertyPanel";
 import { AIPanel } from "@features/ai/components/AIPanel";
 import { RealtimeCoach } from "@features/ai/components/RealtimeCoach";
@@ -91,9 +92,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         </button>
       </header>
 
-      {/* Toolbar rows */}
-      <MenuBar />
-      <TextFormatBar />
+      {/* Ribbon */}
+      <Ribbon />
       {activeTool === "pen" && <BooleanToolbar />}
 
       {/* Body */}
@@ -116,6 +116,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           </aside>
         )}
       </div>
+
+      {/* Bottom status bar */}
+      <StatusBar />
     </div>
   );
 }
