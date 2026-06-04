@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
 import { Shapes, Square, Circle, Triangle, Minus, ArrowRight, Star, Diamond } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { addShape, type ShapeType } from "@lib/fabric/tools/shapes";
+import { Popover } from "@shared/components/ui";
 
 const SHAPES: { type: ShapeType; label: string; Icon: typeof Square }[] = [
   { type: "rect", label: "矩形", Icon: Square },
@@ -16,26 +16,28 @@ const SHAPES: { type: ShapeType; label: string; Icon: typeof Square }[] = [
 
 export function ShapeToolbar() {
   const { canvas } = useEditorStore();
-  const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <button onClick={() => setOpen(!open)} title="図形"
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-content-secondary hover:bg-surface-muted hover:text-content-primary transition-colors">
-        <Shapes className="h-4 w-4" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-10 z-20 grid grid-cols-4 gap-1 rounded-xl border border-border bg-surface p-2 shadow-modal">
-            {SHAPES.map(({ type, label, Icon }) => (
-              <button key={type} onClick={() => { canvas && addShape(canvas, type); setOpen(false); }} title={label}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-content-secondary hover:bg-primary-50 hover:text-primary-600 transition-colors">
-                <Icon className="h-4 w-4" />
-              </button>
-            ))}
-          </div>
-        </>
+    <Popover
+      align="left"
+      trigger={({ toggle, ref }) => (
+        <span ref={ref as (el: HTMLSpanElement | null) => void} className="inline-flex">
+          <button onClick={toggle} title="図形"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-content-secondary hover:bg-surface-muted hover:text-content-primary transition-colors">
+            <Shapes className="h-4 w-4" />
+          </button>
+        </span>
       )}
-    </div>
+    >
+      {(close) => (
+        <div className="grid grid-cols-4 gap-1 p-2">
+          {SHAPES.map(({ type, label, Icon }) => (
+            <button key={type} onClick={() => { canvas && addShape(canvas, type); close(); }} title={label}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-content-secondary hover:bg-primary-50 hover:text-primary-600 transition-colors">
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
+      )}
+    </Popover>
   );
 }

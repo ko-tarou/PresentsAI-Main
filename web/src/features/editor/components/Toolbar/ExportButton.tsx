@@ -5,13 +5,13 @@ import { useEditorStore } from "../../stores/editorStore";
 import { exportToPDF } from "@lib/export/pdf";
 import { exportToPNG, exportToSVG } from "@lib/export/png";
 import { exportToPPTX } from "@lib/export/pptx";
+import { Popover } from "@shared/components/ui";
 
 export function ExportButton() {
   const { canvas } = useEditorStore();
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  async function run(fn: ()=>Promise<void>|void) {
-    if (!canvas) return; setBusy(true); setOpen(false);
+  async function run(fn: ()=>Promise<void>|void, close: () => void) {
+    if (!canvas) return; setBusy(true); close();
     try { await fn(); } finally { setBusy(false); }
   }
   const OPTIONS = [
@@ -21,24 +21,27 @@ export function ExportButton() {
     { l: "PPTX として保存", Icon: Presentation, fn: () => exportToPPTX(canvas!) },
   ];
   return (
-    <div className="relative">
-      <button onClick={()=>setOpen(!open)} disabled={busy}
-        className="btn btn-secondary btn-sm gap-1.5 disabled:opacity-50">
-        <Download className="h-4 w-4" />{busy?"出力中...":"エクスポート"}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-10 z-20 w-44 rounded-xl border border-border bg-surface p-1 shadow-modal">
-            {OPTIONS.map(({l,Icon,fn})=>(
-              <button key={l} onClick={()=>run(fn)}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-content-secondary hover:bg-primary-50 hover:text-primary-600 transition-colors">
-                <Icon className="h-4 w-4" />{l}
-              </button>
-            ))}
-          </div>
-        </>
+    <Popover
+      align="right"
+      trigger={({ toggle, ref }) => (
+        <span ref={ref as (el: HTMLSpanElement | null) => void} className="inline-flex">
+          <button onClick={toggle} disabled={busy}
+            className="btn btn-secondary btn-sm gap-1.5 disabled:opacity-50">
+            <Download className="h-4 w-4" />{busy?"出力中...":"エクスポート"}
+          </button>
+        </span>
       )}
-    </div>
+    >
+      {(close) => (
+        <div className="w-44 p-1">
+          {OPTIONS.map(({l,Icon,fn})=>(
+            <button key={l} onClick={()=>run(fn, close)}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-content-secondary hover:bg-primary-50 hover:text-primary-600 transition-colors">
+              <Icon className="h-4 w-4" />{l}
+            </button>
+          ))}
+        </div>
+      )}
+    </Popover>
   );
 }

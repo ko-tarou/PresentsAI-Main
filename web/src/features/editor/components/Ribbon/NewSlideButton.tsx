@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useSlideStore } from "../../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
 import { SLIDE_LAYOUTS, type SlideLayout } from "@lib/fabric/layouts";
+import { Popover } from "@shared/components/ui";
 import { RibbonBigButton } from "./ribbonPrimitives";
 import type { Slide } from "@shared/types/slide";
 
@@ -54,30 +55,10 @@ export function NewSlideButton() {
   const { slides, addSlide, setCurrentIndex, updateSlide } = useSlideStore();
   const { setActiveSlide, presentationId } = useEditorStore();
   const { accessToken } = useAuthStore();
-  const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click / Escape
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   async function applyLayout(layout: SlideLayout) {
     if (!accessToken || !presentationId || adding) return;
-    setOpen(false);
     setAdding(true);
     try {
       const created = (await slidesApi.create(accessToken, presentationId)) as Slide;
@@ -95,16 +76,22 @@ export function NewSlideButton() {
   }
 
   return (
-    <div ref={wrapRef} className="relative h-full">
-      <RibbonBigButton
-        icon={<Plus />}
-        label="新しいスライド"
-        onClick={() => setOpen((o) => !o)}
-        disabled={adding || !presentationId}
-        testId="new-slide"
-      />
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-80 rounded-xl border border-border bg-surface p-3 shadow-modal">
+    <Popover
+      align="left"
+      trigger={({ toggle, ref }) => (
+        <span ref={ref as (el: HTMLSpanElement | null) => void} className="inline-flex h-full">
+          <RibbonBigButton
+            icon={<Plus />}
+            label="新しいスライド"
+            onClick={toggle}
+            disabled={adding || !presentationId}
+            testId="new-slide"
+          />
+        </span>
+      )}
+    >
+      {(close) => (
+        <div className="w-80 p-3">
           <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-content-tertiary">
             レイアウト
           </p>
@@ -113,7 +100,7 @@ export function NewSlideButton() {
               <button
                 key={layout.id}
                 data-testid={`layout-${layout.id}`}
-                onClick={() => applyLayout(layout)}
+                onClick={() => { applyLayout(layout); close(); }}
                 className="group flex flex-col gap-1 rounded-lg border border-transparent p-1.5 text-left transition-colors hover:border-primary-300 hover:bg-primary-50"
               >
                 <LayoutPreview layout={layout} />
@@ -125,6 +112,6 @@ export function NewSlideButton() {
           </div>
         </div>
       )}
-    </div>
+    </Popover>
   );
 }
