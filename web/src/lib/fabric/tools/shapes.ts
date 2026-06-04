@@ -20,6 +20,8 @@ export function addShape(canvas: Canvas, type: ShapeType, opts: ShapeOptions = {
     fill: opts.fill ?? "#4A90E2",
     stroke: opts.stroke ?? "transparent",
     strokeWidth: opts.strokeWidth ?? 0,
+    // Keep outline width constant while scaling (PowerPoint behavior).
+    strokeUniform: true,
   };
 
   let obj: FabricObject;
@@ -40,6 +42,7 @@ export function addShape(canvas: Canvas, type: ShapeType, opts: ShapeOptions = {
         stroke: opts.stroke ?? "#333333",
         strokeWidth: opts.strokeWidth ?? 2,
         fill: "transparent",
+        strokeUniform: true,
       });
       break;
     case "arrow":
@@ -48,6 +51,7 @@ export function addShape(canvas: Canvas, type: ShapeType, opts: ShapeOptions = {
         stroke: opts.stroke ?? "#333333",
         strokeWidth: opts.strokeWidth ?? 2,
         fill: "transparent",
+        strokeUniform: true,
       });
       break;
     case "star":

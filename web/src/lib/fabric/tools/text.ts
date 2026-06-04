@@ -1,4 +1,5 @@
 import { Canvas, IText, Textbox } from "fabric";
+import { configureTextboxNoDistort } from "../powerpointControls";
 // Note: Textbox extends IText in Fabric v6 but is not assignable via return-type covariance
 
 export interface TextOptions {
@@ -28,6 +29,7 @@ export function addText(canvas: Canvas, text = "テキストを入力", opts: Te
     width: opts.width ?? 400,
     editable: true,
   });
+  configureTextboxNoDistort(obj);
   canvas.add(obj);
   canvas.setActiveObject(obj);
   obj.enterEditing();
