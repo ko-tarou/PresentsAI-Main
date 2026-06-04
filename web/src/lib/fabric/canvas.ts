@@ -1,4 +1,8 @@
 import { Canvas } from "fabric";
+import { applyPowerPointControls } from "./powerpointControls";
+
+// Apply PowerPoint-style selection/resize defaults once at module load.
+applyPowerPointControls();
 
 export interface CanvasOptions {
   width: number;
@@ -10,6 +14,7 @@ export const SLIDE_WIDTH = 1280;
 export const SLIDE_HEIGHT = 720;
 
 export function createCanvas(el: HTMLCanvasElement, opts?: Partial<CanvasOptions>): Canvas {
+  applyPowerPointControls();
   const canvas = new Canvas(el, {
     width: opts?.width ?? SLIDE_WIDTH,
     height: opts?.height ?? SLIDE_HEIGHT,
