@@ -1,11 +1,25 @@
 "use client";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useEditorStore } from "../../stores/editorStore";
+import { ContextMenu, type ContextMenuState } from "./ContextMenu";
 
 export function EditorCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { canvasRef, initCanvas } = useCanvas(containerRef);
+  const [menu, setMenu] = useState<ContextMenuState | null>(null);
+
+  function handleContextMenu(e: React.MouseEvent) {
+    const { canvas } = useEditorStore.getState();
+    if (!canvas) return;
+    // Only show the menu when right-clicking over an object.
+    if (!canvas.getActiveObject()) {
+      setMenu(null);
+      return;
+    }
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY });
+  }
 
   // Ctrl/Cmd + scroll to zoom
   useEffect(() => {
@@ -27,7 +41,11 @@ export function EditorCanvas() {
   }, []);
 
   return (
-    <div ref={containerRef} className="flex h-full items-center justify-center bg-gray-200 p-8">
+    <div
+      ref={containerRef}
+      onContextMenu={handleContextMenu}
+      className="flex h-full items-center justify-center bg-gray-200 p-8"
+    >
       <div className="shadow-xl">
         <canvas
           ref={(el) => {
@@ -38,6 +56,7 @@ export function EditorCanvas() {
           }}
         />
       </div>
+      <ContextMenu pos={menu} onClose={() => setMenu(null)} />
     </div>
   );
 }

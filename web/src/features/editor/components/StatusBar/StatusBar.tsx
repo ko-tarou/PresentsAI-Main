@@ -1,11 +1,11 @@
 "use client";
-import { Minus, Plus, Maximize, Layout, Grid2x2, BookOpen, Play } from "lucide-react";
+import { Minus, Plus, Maximize, Layout, Grid2x2, BookOpen, Play, FileText } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useSlideStore } from "../../stores/slideStore";
 import { fitToContainer, SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 
 export function StatusBar() {
-  const { canvas, zoom, setZoom, presentationId } = useEditorStore();
+  const { canvas, zoom, setZoom, presentationId, notesVisible, toggleNotes } = useEditorStore();
   const { slides, currentIndex } = useSlideStore();
 
   function startSlideshow() {
@@ -31,6 +31,18 @@ export function StatusBar() {
     <div className="flex h-7 shrink-0 items-center justify-between border-t border-border bg-surface px-3 text-xs text-content-secondary">
       <div className="flex items-center gap-3">
         <span>スライド {slides.length === 0 ? 0 : currentIndex + 1} / {slides.length}</span>
+        <button
+          onClick={toggleNotes}
+          title="ノート"
+          aria-label="ノート"
+          aria-pressed={notesVisible}
+          className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors ${
+            notesVisible ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted"
+          }`}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          ノート
+        </button>
       </div>
       <div className="flex items-center gap-3">
         {/* View-mode buttons (PowerPoint bottom-right) */}
