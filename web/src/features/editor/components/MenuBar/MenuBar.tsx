@@ -132,7 +132,7 @@ export function MenuBar() {
         title="保存 (⌘S)"
         className={`ml-1 flex items-center gap-1.5 rounded-lg px-3 h-8 text-sm font-medium transition-colors ${
           isDirty
-            ? "bg-primary-600 text-white hover:bg-primary-700 shadow-sm"
+            ? "bg-[#C43E1C] text-white hover:bg-[#A33216] shadow-sm"
             : "bg-surface-muted text-content-tertiary cursor-default"
         }`}
       >

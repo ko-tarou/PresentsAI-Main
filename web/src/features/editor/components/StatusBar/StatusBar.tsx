@@ -32,7 +32,7 @@ export function StatusBar() {
   }
 
   return (
-    <div className="flex h-7 shrink-0 items-center justify-between border-t border-border bg-surface px-3 text-xs text-content-secondary">
+    <div className="flex h-7 shrink-0 items-center justify-between border-t border-border bg-[#F3F2F1] px-3 text-xs text-[#605E5C]">
       <div className="flex items-center gap-3">
         <span>スライド {slides.length === 0 ? 0 : currentIndex + 1} / {slides.length}</span>
         <button
@@ -41,7 +41,7 @@ export function StatusBar() {
           aria-label="ノート"
           aria-pressed={notesVisible}
           className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors ${
-            notesVisible ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted"
+            notesVisible ? "bg-[#FBE9E3] text-[#C43E1C]" : "hover:bg-surface-muted"
           }`}
         >
           <FileText className="h-3.5 w-3.5" />
@@ -56,7 +56,7 @@ export function StatusBar() {
             title="標準"
             aria-label="標準"
             aria-pressed={viewMode === "normal"}
-            className={`rounded p-0.5 ${viewMode === "normal" ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted"}`}
+            className={`rounded p-0.5 ${viewMode === "normal" ? "bg-[#FBE9E3] text-[#C43E1C]" : "hover:bg-surface-muted"}`}
           >
             <Layout className="h-3.5 w-3.5" />
           </button>
@@ -65,14 +65,14 @@ export function StatusBar() {
             title="スライド一覧"
             aria-label="スライド一覧"
             aria-pressed={viewMode === "sorter"}
-            className={`rounded p-0.5 ${viewMode === "sorter" ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted"}`}
+            className={`rounded p-0.5 ${viewMode === "sorter" ? "bg-[#FBE9E3] text-[#C43E1C]" : "hover:bg-surface-muted"}`}
           >
             <Grid2x2 className="h-3.5 w-3.5" />
           </button>
-          <button onClick={openReadingView} title="閲覧表示" aria-label="閲覧表示" className="rounded p-0.5 hover:bg-surface-muted hover:text-primary-600">
+          <button onClick={openReadingView} title="閲覧表示" aria-label="閲覧表示" className="rounded p-0.5 hover:bg-surface-muted hover:text-[#C43E1C]">
             <BookOpen className="h-3.5 w-3.5" />
           </button>
-          <button onClick={startSlideshow} title="スライドショー" aria-label="スライドショー" className="rounded p-0.5 hover:bg-surface-muted hover:text-primary-600">
+          <button onClick={startSlideshow} title="スライドショー" aria-label="スライドショー" className="rounded p-0.5 hover:bg-surface-muted hover:text-[#C43E1C]">
             <Play className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -80,7 +80,7 @@ export function StatusBar() {
         <input
           type="range" min={10} max={300} value={Math.round(zoom * 100)}
           onChange={e => applyZoom(Number(e.target.value) / 100)}
-          className="h-1 w-32 cursor-pointer accent-primary-600"
+          className="h-1 w-32 cursor-pointer accent-[#C43E1C]"
           aria-label="ズーム"
         />
         <button onClick={() => applyZoom(zoom - 0.1)} className="rounded p-0.5 hover:bg-surface-muted" aria-label="縮小"><Minus className="h-3.5 w-3.5" /></button>

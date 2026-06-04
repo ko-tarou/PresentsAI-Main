@@ -14,10 +14,10 @@ export function applyPowerPointControls() {
     ...InteractiveFabricObject.ownDefaults,
     cornerStyle: "circle",
     cornerColor: "#ffffff",
-    cornerStrokeColor: "#4F46E5",
+    cornerStrokeColor: "#A6A6A6",
     cornerSize: 10,
     transparentCorners: false,
-    borderColor: "#4F46E5",
+    borderColor: "#A6A6A6",
     borderScaleFactor: 1.5,
     padding: 0,
   };
