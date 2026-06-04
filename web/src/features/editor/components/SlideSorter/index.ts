@@ -1,0 +1,1 @@
+export { SlideSorter } from "./SlideSorter";

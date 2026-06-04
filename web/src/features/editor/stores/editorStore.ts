@@ -2,6 +2,8 @@ import { create } from "zustand";
 import type { Canvas } from "fabric";
 import type { EditorTool } from "@shared/types/slide";
 
+export type ViewMode = "normal" | "sorter";
+
 interface EditorState {
   canvas: Canvas | null;
   activeTool: EditorTool;
@@ -10,6 +12,8 @@ interface EditorState {
   isDirty: boolean;
   zoom: number;
   notesVisible: boolean;
+  viewMode: ViewMode;
+  showRuler: boolean;
 
   setCanvas: (canvas: Canvas | null) => void;
   setActiveTool: (tool: EditorTool) => void;
@@ -19,6 +23,9 @@ interface EditorState {
   setZoom: (zoom: number) => void;
   toggleNotes: () => void;
   setNotesVisible: (visible: boolean) => void;
+  setViewMode: (mode: ViewMode) => void;
+  toggleRuler: () => void;
+  setShowRuler: (show: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -29,6 +36,8 @@ export const useEditorStore = create<EditorState>()((set) => ({
   isDirty: false,
   zoom: 1,
   notesVisible: true,
+  viewMode: "normal",
+  showRuler: false,
 
   setCanvas: (canvas) => set({ canvas }),
   setActiveTool: (activeTool) => set({ activeTool }),
@@ -38,4 +47,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setZoom: (zoom) => set({ zoom }),
   toggleNotes: () => set((s) => ({ notesVisible: !s.notesVisible })),
   setNotesVisible: (notesVisible) => set({ notesVisible }),
+  setViewMode: (viewMode) => set({ viewMode }),
+  toggleRuler: () => set((s) => ({ showRuler: !s.showRuler })),
+  setShowRuler: (showRuler) => set({ showRuler }),
 }));
