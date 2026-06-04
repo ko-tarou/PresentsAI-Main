@@ -9,6 +9,7 @@ interface EditorState {
   presentationId: string | null;
   isDirty: boolean;
   zoom: number;
+  notesVisible: boolean;
 
   setCanvas: (canvas: Canvas | null) => void;
   setActiveTool: (tool: EditorTool) => void;
@@ -16,6 +17,8 @@ interface EditorState {
   setPresentationId: (id: string) => void;
   setDirty: (dirty: boolean) => void;
   setZoom: (zoom: number) => void;
+  toggleNotes: () => void;
+  setNotesVisible: (visible: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -25,6 +28,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   presentationId: null,
   isDirty: false,
   zoom: 1,
+  notesVisible: true,
 
   setCanvas: (canvas) => set({ canvas }),
   setActiveTool: (activeTool) => set({ activeTool }),
@@ -32,4 +36,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setPresentationId: (presentationId) => set({ presentationId }),
   setDirty: (isDirty) => set({ isDirty }),
   setZoom: (zoom) => set({ zoom }),
+  toggleNotes: () => set((s) => ({ notesVisible: !s.notesVisible })),
+  setNotesVisible: (notesVisible) => set({ notesVisible }),
 }));

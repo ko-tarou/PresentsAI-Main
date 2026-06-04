@@ -1,7 +1,6 @@
 "use client";
-import { useState } from "react";
 import {
-  Plus, Copy, Trash2,
+  Copy, Trash2,
   Bold, Italic, Underline, Strikethrough, ChevronUp, ChevronDown, Baseline, Highlighter,
   List, ListOrdered, IndentDecrease, IndentIncrease,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Rows3,
@@ -10,17 +9,14 @@ import {
 } from "lucide-react";
 import { IText, ActiveSelection } from "fabric";
 import { useEditorStore } from "../../stores/editorStore";
-import { useSlideStore } from "../../stores/slideStore";
-import { useAuthStore } from "@features/dashboard/stores/authStore";
-import { slidesApi } from "@shared/api/slides";
 import { applyTextFormat } from "@lib/fabric/tools/text";
 import { applyStyle } from "@lib/fabric/tools/style";
 import { convertToUnorderedList, setLineHeight } from "@lib/fabric/tools/richText";
 import {
   deleteSelected, duplicateSelected, bringToFront, sendToBack,
 } from "@lib/fabric/tools/select";
-import { RibbonGroup, RibbonDivider, RibbonBigButton, RibbonIconButton } from "./ribbonPrimitives";
-import type { Slide } from "@shared/types/slide";
+import { RibbonGroup, RibbonDivider, RibbonIconButton } from "./ribbonPrimitives";
+import { NewSlideButton } from "./NewSlideButton";
 
 const FONT_FAMILIES = [
   "sans-serif", "serif", "monospace", "Arial", "Helvetica",
@@ -29,10 +25,6 @@ const FONT_FAMILIES = [
 
 export function HomeTab() {
   const { canvas } = useEditorStore();
-  const { slides, addSlide, setCurrentIndex } = useSlideStore();
-  const { setActiveSlide, presentationId } = useEditorStore();
-  const { accessToken } = useAuthStore();
-  const [adding, setAdding] = useState(false);
 
   function fmt(format: Parameters<typeof applyTextFormat>[1]) {
     if (canvas) applyTextFormat(canvas, format);
@@ -56,28 +48,11 @@ export function HomeTab() {
     canvas.requestRenderAll();
   }
 
-  async function handleNewSlide() {
-    if (!accessToken || !presentationId || adding) return;
-    setAdding(true);
-    try {
-      const s = await slidesApi.create(accessToken, presentationId);
-      addSlide(s as Slide);
-      const newIndex = slides.length;
-      setCurrentIndex(newIndex);
-      setActiveSlide((s as Slide).id);
-    } finally {
-      setAdding(false);
-    }
-  }
-
   return (
     <div className="flex h-full items-stretch">
       {/* スライド */}
       <RibbonGroup label="スライド">
-        <RibbonBigButton
-          icon={<Plus />} label="新しいスライド"
-          onClick={handleNewSlide} disabled={adding || !presentationId}
-        />
+        <NewSlideButton />
         <div className="flex flex-col gap-0.5">
           <RibbonIconButton icon={<Copy />} title="複製 (⌘D)" onClick={() => canvas && duplicateSelected(canvas)} />
           <RibbonIconButton icon={<Trash2 />} title="削除 (Del)" onClick={() => canvas && deleteSelected(canvas)} />

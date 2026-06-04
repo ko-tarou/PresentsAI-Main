@@ -28,7 +28,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
@@ -112,7 +112,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           <div className="flex-1 overflow-hidden">
             <EditorCanvas />
           </div>
-          <SpeakerNotesPanel />
+          {notesVisible && <SpeakerNotesPanel />}
         </main>
         <aside className="flex w-56 shrink-0 flex-col border-l bg-white overflow-y-auto">
           <StylePanel />

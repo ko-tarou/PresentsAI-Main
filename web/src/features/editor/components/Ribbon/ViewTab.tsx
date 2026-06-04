@@ -1,13 +1,13 @@
 "use client";
 import { useRef, useState } from "react";
-import { Monitor, Grid3x3, LayoutGrid, Ruler, Magnet, Maximize } from "lucide-react";
+import { Monitor, Grid3x3, LayoutGrid, Ruler, Magnet, Maximize, FileText } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { toggleGrid, enableSnap } from "@lib/fabric/grid";
 import { fitToContainer } from "@lib/fabric/canvas";
 import { RibbonGroup, RibbonDivider, RibbonBigButton } from "./ribbonPrimitives";
 
 export function ViewTab() {
-  const { canvas, setZoom } = useEditorStore();
+  const { canvas, setZoom, notesVisible, toggleNotes } = useEditorStore();
   const [grid, setGrid] = useState(false);
   const [snap, setSnap] = useState(false);
   const snapEnabled = useRef(false);
@@ -53,6 +53,7 @@ export function ViewTab() {
         <RibbonBigButton icon={<Grid3x3 />} label="グリッド線" active={grid} onClick={onToggleGrid} />
         <RibbonBigButton icon={<Magnet />} label="スナップ" active={snap} onClick={onToggleSnap} />
         <RibbonBigButton icon={<Ruler />} label="ルーラー" title="ルーラー — 次のアップデートで実装" />
+        <RibbonBigButton icon={<FileText />} label="ノート" active={notesVisible} onClick={toggleNotes} title="ノート" />
       </RibbonGroup>
       <RibbonDivider />
 
