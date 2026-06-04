@@ -19,7 +19,7 @@ export function TemplatePanel() {
   const [open, setOpen] = useState(false);
   function apply(content: SlideContent) {
     if (!canvas||!activeSlideId) return;
-    canvas.loadFromJSON(content).then(()=>{ canvas.renderAll(); updateSlide(activeSlideId, content as Record<string, unknown>); });
+    canvas.loadFromJSON(content).then(()=>{ canvas.renderAll(); updateSlide(activeSlideId, content as unknown as Record<string, unknown>); });
     setOpen(false);
   }
   return (

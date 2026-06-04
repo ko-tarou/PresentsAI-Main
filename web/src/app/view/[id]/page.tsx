@@ -18,8 +18,8 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
     if (!canvasRef.current||!slides[cur]||!containerRef.current) return;
     const c = createCanvas(canvasRef.current);
     fitToContainer(c, containerRef.current.clientWidth);
-    loadFromJSON(c, slides[cur].content as Record<string,unknown>);
-    return () => c.dispose();
+    loadFromJSON(c, slides[cur].content);
+    return () => { c.dispose(); };
   }, [cur, slides]);
 
   const next = useCallback(() => setCur(c=>Math.min(c+1,slides.length-1)), [slides.length]);
