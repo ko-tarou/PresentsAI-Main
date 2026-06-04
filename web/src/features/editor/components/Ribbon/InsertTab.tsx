@@ -13,44 +13,46 @@ import { RibbonGroup, RibbonDivider, RibbonBigButton } from "./ribbonPrimitives"
 export function InsertTab() {
   const { canvas } = useEditorStore();
 
+  // Each insert item renders its own big labeled button (PowerPoint style),
+  // so the RibbonGroup caption is omitted to avoid a redundant double label.
   return (
     <div className="flex h-full items-stretch">
-      <RibbonGroup label="表">
+      <RibbonGroup>
         <TableButton />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="画像">
+      <RibbonGroup>
         <ImageUploadButton />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="図形">
+      <RibbonGroup>
         <ShapeToolbar />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="グラフ">
+      <RibbonGroup>
         <ChartButton />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="テキスト">
+      <RibbonGroup>
         <RibbonBigButton
           testId="insert-text"
-          icon={<Type />} label="テキストボックス"
+          icon={<Type />} label="テキスト"
           onClick={() => canvas && addText(canvas)}
           disabled={!canvas}
         />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="テンプレート">
+      <RibbonGroup>
         <TemplatePanel />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="コンポーネント">
+      <RibbonGroup>
         <ComponentPanel />
       </RibbonGroup>
     </div>

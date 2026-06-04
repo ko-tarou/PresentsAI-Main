@@ -2,11 +2,11 @@
 import { clsx } from "clsx";
 
 // A labeled group of controls with a centered caption underneath (PowerPoint style)
-export function RibbonGroup({ label, children }: { label: string; children: React.ReactNode }) {
+export function RibbonGroup({ label, children }: { label?: string; children: React.ReactNode }) {
   return (
     <div className="flex h-full flex-col items-center px-2">
       <div className="flex flex-1 items-center gap-0.5">{children}</div>
-      <span className="mt-0.5 text-[10px] leading-none text-content-tertiary">{label}</span>
+      {label && <span className="mt-0.5 text-[10px] leading-none text-content-tertiary">{label}</span>}
     </div>
   );
 }
