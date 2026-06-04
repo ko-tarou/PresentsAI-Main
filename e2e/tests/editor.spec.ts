@@ -13,14 +13,17 @@ test.describe("Editor flow", () => {
     await page.getByRole("button", { name: /新規作成|最初のプレゼン/ }).first().click();
     await page.waitForURL("**/editor/**", { timeout: 20_000 });
 
-    // Editor toolbar visible.
-    await expect(page.locator('button[title="テキスト (T)"]')).toBeVisible();
+    // Open the 挿入 ribbon tab and locate the insert-text button.
+    await page.getByRole("button", { name: "挿入" }).click();
+    const insertText = page.getByTestId("insert-text");
+    await expect(insertText).toBeVisible();
+    await expect(insertText).toBeEnabled({ timeout: 20_000 });
 
     // Add a textbox (this used to trigger "Maximum update depth exceeded").
-    await page.locator('button[title="テキスト (T)"]').click();
+    await insertText.click();
     await page.waitForTimeout(1500);
     await page.keyboard.press("Escape");
-    await page.locator('button[title="テキスト (T)"]').click();
+    await insertText.click();
     await page.waitForTimeout(1500);
 
     // No infinite-loop / max-depth errors.
