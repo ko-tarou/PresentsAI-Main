@@ -3,11 +3,13 @@ import { useRef, useEffect, useState } from "react";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useEditorStore } from "../../stores/editorStore";
 import { ContextMenu, type ContextMenuState } from "./ContextMenu";
+import { RulerHorizontal, RulerVertical } from "./Rulers";
 
 export function EditorCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { canvasRef, initCanvas } = useCanvas(containerRef);
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
+  const showRuler = useEditorStore((s) => s.showRuler);
 
   function handleContextMenu(e: React.MouseEvent) {
     const { canvas } = useEditorStore.getState();
@@ -46,15 +48,38 @@ export function EditorCanvas() {
       onContextMenu={handleContextMenu}
       className="flex h-full items-center justify-center bg-gray-200 p-8"
     >
-      <div className="shadow-xl">
-        <canvas
-          ref={(el) => {
-            if (el && !canvasRef.current) {
-              (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
-              initCanvas(el);
-            }
-          }}
-        />
+      {/* Single grid; rulers occupy the first row/column only when enabled.
+          The canvas element is rendered exactly once and never remounts on
+          toggle, so Fabric keeps drawing on the same DOM node. */}
+      <div
+        className="grid"
+        style={
+          showRuler
+            ? { gridTemplateColumns: "1.25rem auto", gridTemplateRows: "1.25rem auto" }
+            : { gridTemplateColumns: "auto", gridTemplateRows: "auto" }
+        }
+      >
+        {showRuler && (
+          <>
+            {/* Top-left corner */}
+            <div key="corner" className="border-b border-r border-border bg-surface-muted" />
+            {/* Top ruler */}
+            <RulerHorizontal key="ruler-h" />
+            {/* Left ruler */}
+            <RulerVertical key="ruler-v" />
+          </>
+        )}
+        {/* Canvas (stable element — keyed so React never remounts it on toggle) */}
+        <div key="canvas-wrapper" className="shadow-xl">
+          <canvas
+            ref={(el) => {
+              if (el && !canvasRef.current) {
+                (canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = el;
+                initCanvas(el);
+              }
+            }}
+          />
+        </div>
       </div>
       <ContextMenu pos={menu} onClose={() => setMenu(null)} />
     </div>

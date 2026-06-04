@@ -5,11 +5,15 @@ import { useSlideStore } from "../../stores/slideStore";
 import { fitToContainer, SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 
 export function StatusBar() {
-  const { canvas, zoom, setZoom, presentationId, notesVisible, toggleNotes } = useEditorStore();
+  const { canvas, zoom, setZoom, presentationId, notesVisible, toggleNotes, viewMode, setViewMode } = useEditorStore();
   const { slides, currentIndex } = useSlideStore();
 
   function startSlideshow() {
     if (presentationId) window.location.href = `/present/${presentationId}`;
+  }
+
+  function openReadingView() {
+    if (presentationId) window.location.href = `/view/${presentationId}`;
   }
 
   function applyZoom(z: number) {
@@ -47,13 +51,25 @@ export function StatusBar() {
       <div className="flex items-center gap-3">
         {/* View-mode buttons (PowerPoint bottom-right) */}
         <div className="flex items-center gap-0.5">
-          <button title="標準" aria-label="標準" className="rounded p-0.5 bg-primary-100 text-primary-700">
+          <button
+            onClick={() => setViewMode("normal")}
+            title="標準"
+            aria-label="標準"
+            aria-pressed={viewMode === "normal"}
+            className={`rounded p-0.5 ${viewMode === "normal" ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted"}`}
+          >
             <Layout className="h-3.5 w-3.5" />
           </button>
-          <button title="スライド一覧 — 次のアップデートで実装" aria-label="スライド一覧" className="rounded p-0.5 hover:bg-surface-muted">
+          <button
+            onClick={() => setViewMode("sorter")}
+            title="スライド一覧"
+            aria-label="スライド一覧"
+            aria-pressed={viewMode === "sorter"}
+            className={`rounded p-0.5 ${viewMode === "sorter" ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted"}`}
+          >
             <Grid2x2 className="h-3.5 w-3.5" />
           </button>
-          <button title="閲覧表示 — 次のアップデートで実装" aria-label="閲覧表示" className="rounded p-0.5 hover:bg-surface-muted">
+          <button onClick={openReadingView} title="閲覧表示" aria-label="閲覧表示" className="rounded p-0.5 hover:bg-surface-muted hover:text-primary-600">
             <BookOpen className="h-3.5 w-3.5" />
           </button>
           <button onClick={startSlideshow} title="スライドショー" aria-label="スライドショー" className="rounded p-0.5 hover:bg-surface-muted hover:text-primary-600">

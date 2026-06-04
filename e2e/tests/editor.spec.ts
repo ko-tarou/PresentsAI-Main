@@ -34,6 +34,21 @@ test.describe("Editor flow", () => {
     await expect(page).toHaveURL(/\/editor\//);
   });
 
+  test("status-bar スライド一覧 shows the slide sorter and 標準表示に戻る returns", async ({ page }) => {
+    const email = uniqueEmail();
+    await registerAndLogin(page, email);
+    await page.getByRole("button", { name: /新規作成|最初のプレゼン/ }).first().click();
+    await page.waitForURL("**/editor/**", { timeout: 20_000 });
+
+    // Switch to slide sorter via the status-bar view-mode button.
+    await page.getByRole("button", { name: "スライド一覧" }).first().click();
+    await expect(page.getByRole("button", { name: "標準表示に戻る" })).toBeVisible();
+
+    // Return to normal editing view.
+    await page.getByRole("button", { name: "標準表示に戻る" }).click();
+    await expect(page.getByRole("button", { name: "標準表示に戻る" })).toHaveCount(0);
+  });
+
   test("editor hard-refresh stays authenticated", async ({ page }) => {
     const email = uniqueEmail();
     await registerAndLogin(page, email);

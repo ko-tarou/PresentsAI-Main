@@ -7,7 +7,7 @@ import { fitToContainer } from "@lib/fabric/canvas";
 import { RibbonGroup, RibbonDivider, RibbonBigButton } from "./ribbonPrimitives";
 
 export function ViewTab() {
-  const { canvas, setZoom, notesVisible, toggleNotes } = useEditorStore();
+  const { canvas, setZoom, notesVisible, toggleNotes, viewMode, setViewMode, showRuler, toggleRuler } = useEditorStore();
   const [grid, setGrid] = useState(false);
   const [snap, setSnap] = useState(false);
   const snapEnabled = useRef(false);
@@ -39,11 +39,19 @@ export function ViewTab() {
     <div className="flex h-full items-stretch">
       {/* Presentation views */}
       <RibbonGroup label="プレゼンテーション表示">
-        <RibbonBigButton icon={<Monitor />} label="標準" active title="標準表示" />
+        <RibbonBigButton
+          icon={<Monitor />}
+          label="標準"
+          active={viewMode === "normal"}
+          onClick={() => setViewMode("normal")}
+          title="標準表示"
+        />
         <RibbonBigButton
           icon={<LayoutGrid />}
           label="スライド一覧"
-          title="スライド一覧 — 次のアップデートで実装"
+          active={viewMode === "sorter"}
+          onClick={() => setViewMode("sorter")}
+          title="スライド一覧"
         />
       </RibbonGroup>
       <RibbonDivider />
@@ -52,7 +60,7 @@ export function ViewTab() {
       <RibbonGroup label="表示">
         <RibbonBigButton icon={<Grid3x3 />} label="グリッド線" active={grid} onClick={onToggleGrid} />
         <RibbonBigButton icon={<Magnet />} label="スナップ" active={snap} onClick={onToggleSnap} />
-        <RibbonBigButton icon={<Ruler />} label="ルーラー" title="ルーラー — 次のアップデートで実装" />
+        <RibbonBigButton icon={<Ruler />} label="ルーラー" active={showRuler} onClick={toggleRuler} title="ルーラー" />
         <RibbonBigButton icon={<FileText />} label="ノート" active={notesVisible} onClick={toggleNotes} title="ノート" />
       </RibbonGroup>
       <RibbonDivider />

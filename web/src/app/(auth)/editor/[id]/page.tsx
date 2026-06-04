@@ -11,6 +11,7 @@ import { presentationsApi } from "@shared/api/presentations";
 import { ShareButton } from "@features/dashboard/components/ShareButton";
 import { EditorCanvas } from "@features/editor/components/Canvas";
 import { SlidePanel } from "@features/editor/components/SlidePanel";
+import { SlideSorter } from "@features/editor/components/SlideSorter";
 import { Ribbon } from "@features/editor/components/Ribbon";
 import { StatusBar } from "@features/editor/components/StatusBar";
 import { BooleanToolbar } from "@features/editor/components/Toolbar";
@@ -28,7 +29,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool, notesVisible } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
@@ -106,25 +107,31 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       {activeTool === "pen" && <BooleanToolbar />}
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
-        <SlidePanel />
-        <main className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <EditorCanvas />
-          </div>
-          {notesVisible && <SpeakerNotesPanel />}
-        </main>
-        <aside className="flex w-56 shrink-0 flex-col border-l bg-white overflow-y-auto">
-          <StylePanel />
-          <TokenPanel />
-          <ImagePanel />
-        </aside>
-        {aiTab && (
-          <aside className="flex w-64 shrink-0 flex-col border-l bg-white overflow-y-auto">
-            {aiTab === "ai" ? <AIPanel /> : <RealtimeCoach />}
+      {viewMode === "sorter" ? (
+        <div className="flex flex-1 overflow-hidden">
+          <SlideSorter />
+        </div>
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          <SlidePanel />
+          <main className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex-1 overflow-hidden">
+              <EditorCanvas />
+            </div>
+            {notesVisible && <SpeakerNotesPanel />}
+          </main>
+          <aside className="flex w-56 shrink-0 flex-col border-l bg-white overflow-y-auto">
+            <StylePanel />
+            <TokenPanel />
+            <ImagePanel />
           </aside>
-        )}
-      </div>
+          {aiTab && (
+            <aside className="flex w-64 shrink-0 flex-col border-l bg-white overflow-y-auto">
+              {aiTab === "ai" ? <AIPanel /> : <RealtimeCoach />}
+            </aside>
+          )}
+        </div>
+      )}
 
       {/* Bottom status bar */}
       <StatusBar />
