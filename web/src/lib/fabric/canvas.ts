@@ -1,5 +1,5 @@
 import { Canvas } from "fabric";
-import { applyPowerPointControls } from "./powerpointControls";
+import { applyControlsToCanvas, applyPowerPointControls } from "./powerpointControls";
 
 // Apply PowerPoint-style selection/resize defaults once at module load.
 applyPowerPointControls();
@@ -27,6 +27,9 @@ export function createCanvas(el: HTMLCanvasElement, opts?: Partial<CanvasOptions
 
 export function loadFromJSON(canvas: Canvas, json: object): Promise<Canvas> {
   return canvas.loadFromJSON(json).then((c) => {
+    // Re-apply PowerPoint object behaviors to restored objects so saved slides
+    // behave like freshly created ones (uniform stroke, no-distort textboxes).
+    applyControlsToCanvas(c);
     c.renderAll();
     return c;
   });

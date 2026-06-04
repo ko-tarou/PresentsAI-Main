@@ -2,6 +2,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Canvas } from "fabric";
 import { createCanvas, loadFromJSON, toJSON, fitToContainer } from "@lib/fabric/canvas";
+import { enableSmartGuides } from "@lib/fabric/smartGuides";
 import { useEditorStore } from "../stores/editorStore";
 import { useSlideStore } from "../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
@@ -72,6 +73,9 @@ export function useCanvas(containerRef: React.RefObject<HTMLDivElement | null>) 
     const canvas = createCanvas(el);
     fabricRef.current = canvas;
     setCanvas(canvas);
+
+    // PowerPoint-style alignment guides while dragging (editor-only).
+    enableSmartGuides(canvas);
 
     const onChanged = () => {
       // Ignore events fired by a programmatic loadFromJSON; otherwise the load
