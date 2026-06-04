@@ -1,4 +1,4 @@
-import { FabricObject, InteractiveFabricObject, Textbox } from "fabric";
+import { Canvas, FabricObject, InteractiveFabricObject, Textbox } from "fabric";
 
 /**
  * Configure Fabric v6 global defaults so object selection / resize behaves like
@@ -38,8 +38,29 @@ export function applyPowerPointControls() {
  */
 export function configureTextboxNoDistort(tb: Textbox) {
   tb.setControlsVisibility({ mt: false, mb: false });
+  // Guard against double-attaching the scaling handler (idempotent). This lets
+  // us safely re-apply controls to textboxes restored via loadFromJSON.
+  if ((tb as Textbox & { __ppNoDistort?: boolean }).__ppNoDistort) return;
+  (tb as Textbox & { __ppNoDistort?: boolean }).__ppNoDistort = true;
   tb.on("scaling", () => {
     const w = tb.width * (tb.scaleX ?? 1);
     tb.set({ width: Math.max(20, w), scaleX: 1, scaleY: 1 });
+  });
+}
+
+/**
+ * Re-apply PowerPoint object behaviors to every object currently on the canvas.
+ * Call this after loadFromJSON so objects restored from saved slide JSON keep
+ * the same controls as freshly created ones:
+ *  - shapes keep a constant stroke width while scaling (strokeUniform)
+ *  - textboxes reflow instead of distorting glyphs when resized
+ *
+ * Idempotent: configureTextboxNoDistort guards against double-attaching its
+ * scaling handler, so repeated calls are safe.
+ */
+export function applyControlsToCanvas(canvas: Canvas) {
+  canvas.getObjects().forEach((o) => {
+    (o as FabricObject).set?.("strokeUniform", true);
+    if (o instanceof Textbox) configureTextboxNoDistort(o);
   });
 }
