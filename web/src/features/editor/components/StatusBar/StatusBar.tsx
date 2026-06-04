@@ -1,12 +1,16 @@
 "use client";
-import { Minus, Plus, Maximize } from "lucide-react";
+import { Minus, Plus, Maximize, Layout, Grid2x2, BookOpen, Play } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useSlideStore } from "../../stores/slideStore";
 import { fitToContainer, SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 
 export function StatusBar() {
-  const { canvas, zoom, setZoom } = useEditorStore();
+  const { canvas, zoom, setZoom, presentationId } = useEditorStore();
   const { slides, currentIndex } = useSlideStore();
+
+  function startSlideshow() {
+    if (presentationId) window.location.href = `/present/${presentationId}`;
+  }
 
   function applyZoom(z: number) {
     if (!canvas) return;
@@ -29,6 +33,22 @@ export function StatusBar() {
         <span>スライド {slides.length === 0 ? 0 : currentIndex + 1} / {slides.length}</span>
       </div>
       <div className="flex items-center gap-3">
+        {/* View-mode buttons (PowerPoint bottom-right) */}
+        <div className="flex items-center gap-0.5">
+          <button title="標準" aria-label="標準" className="rounded p-0.5 bg-primary-100 text-primary-700">
+            <Layout className="h-3.5 w-3.5" />
+          </button>
+          <button title="スライド一覧 — 次のアップデートで実装" aria-label="スライド一覧" className="rounded p-0.5 hover:bg-surface-muted">
+            <Grid2x2 className="h-3.5 w-3.5" />
+          </button>
+          <button title="閲覧表示 — 次のアップデートで実装" aria-label="閲覧表示" className="rounded p-0.5 hover:bg-surface-muted">
+            <BookOpen className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={startSlideshow} title="スライドショー" aria-label="スライドショー" className="rounded p-0.5 hover:bg-surface-muted hover:text-primary-600">
+            <Play className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="h-4 w-px bg-border" />
         <input
           type="range" min={10} max={300} value={Math.round(zoom * 100)}
           onChange={e => applyZoom(Number(e.target.value) / 100)}

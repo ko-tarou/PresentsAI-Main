@@ -37,6 +37,7 @@ export function InsertTab() {
 
       <RibbonGroup label="テキスト">
         <RibbonBigButton
+          testId="insert-text"
           icon={<Type />} label="テキストボックス"
           onClick={() => canvas && addText(canvas)}
           disabled={!canvas}

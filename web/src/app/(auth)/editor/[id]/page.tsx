@@ -14,6 +14,8 @@ import { SlidePanel } from "@features/editor/components/SlidePanel";
 import { Ribbon } from "@features/editor/components/Ribbon";
 import { StatusBar } from "@features/editor/components/StatusBar";
 import { BooleanToolbar } from "@features/editor/components/Toolbar";
+import { ExportButton } from "@features/editor/components/Toolbar/ExportButton";
+import { QuickAccess } from "@features/editor/components/QuickAccess";
 import { StylePanel, TokenPanel, ImagePanel } from "@features/editor/components/PropertyPanel";
 import { AIPanel } from "@features/ai/components/AIPanel";
 import { RealtimeCoach } from "@features/ai/components/RealtimeCoach";
@@ -66,7 +68,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           <span className="text-xs text-content-tertiary shrink-0">({slides.length} スライド)</span>
         </div>
 
+        {/* Quick Access Toolbar: undo / redo / save */}
+        <div className="h-5 w-px bg-border shrink-0" />
+        <QuickAccess />
+
         <div className="flex-1" />
+
+        {/* Export */}
+        <ExportButton />
 
         {/* Share button */}
         <ShareButton presentationId={id} presentationTitle={title} />

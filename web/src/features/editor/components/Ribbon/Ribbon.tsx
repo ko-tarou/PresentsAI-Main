@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { HomeTab } from "./HomeTab";
 import { InsertTab } from "./InsertTab";
+import { DesignTab } from "./DesignTab";
+import { TransitionTab } from "./TransitionTab";
+import { ViewTab } from "./ViewTab";
 import { usePenTool } from "../../hooks/usePenTool";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 
@@ -13,10 +16,6 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "transition", label: "画面切り替え" },
   { key: "view", label: "表示" },
 ];
-
-function Placeholder({ text }: { text: string }) {
-  return <div className="flex h-full items-center px-6 text-sm text-content-tertiary">{text}</div>;
-}
 
 export function Ribbon() {
   const [tab, setTab] = useState<TabKey>("home");
@@ -42,9 +41,9 @@ export function Ribbon() {
       <div className="flex h-[88px] items-stretch bg-surface-subtle px-2 py-1 overflow-x-auto">
         {tab === "home" && <HomeTab />}
         {tab === "insert" && <InsertTab />}
-        {tab === "design" && <Placeholder text="デザイン（テーマ）は次のアップデートで追加されます" />}
-        {tab === "transition" && <Placeholder text="画面切り替えは次のアップデートで追加されます" />}
-        {tab === "view" && <Placeholder text="表示オプションは次のアップデートで追加されます" />}
+        {tab === "design" && <DesignTab />}
+        {tab === "transition" && <TransitionTab />}
+        {tab === "view" && <ViewTab />}
       </div>
     </div>
   );

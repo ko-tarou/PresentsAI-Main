@@ -17,10 +17,10 @@ export function RibbonDivider() {
 
 // Large button: icon on top, label under (e.g. 貼り付け, 新しいスライド)
 export function RibbonBigButton({
-  icon, label, onClick, active, disabled, title,
-}: { icon: React.ReactNode; label: string; onClick?: () => void; active?: boolean; disabled?: boolean; title?: string }) {
+  icon, label, onClick, active, disabled, title, testId,
+}: { icon: React.ReactNode; label: string; onClick?: () => void; active?: boolean; disabled?: boolean; title?: string; testId?: string }) {
   return (
-    <button onClick={onClick} disabled={disabled} title={title ?? label}
+    <button onClick={onClick} disabled={disabled} title={title ?? label} data-testid={testId}
       className={clsx(
         "flex h-full min-w-14 flex-col items-center justify-center gap-1 rounded-md px-2 py-1 text-content-secondary transition-colors",
         active ? "bg-primary-100 text-primary-700" : "hover:bg-surface-muted hover:text-content-primary",
