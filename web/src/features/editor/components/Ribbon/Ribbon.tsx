@@ -9,6 +9,7 @@ import { AnimationTab } from "./AnimationTab";
 import { SlideShowTab } from "./SlideShowTab";
 import { ReviewTab } from "./ReviewTab";
 import { ViewTab } from "./ViewTab";
+import { Backstage } from "../Backstage";
 import { usePenTool } from "../../hooks/usePenTool";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 
@@ -31,12 +32,18 @@ const TABS: { key: TabKey; label: string }[] = [
 
 export function Ribbon() {
   const [tab, setTab] = useState<TabKey>("home");
+  const [backstageOpen, setBackstageOpen] = useState(false);
   usePenTool();
   useKeyboardShortcuts();
   return (
     <div className="shrink-0 border-b border-border bg-surface">
+      <Backstage open={backstageOpen} onClose={() => setBackstageOpen(false)} />
       {/* Tab strip — allow horizontal scroll if the 9 tabs exceed the width */}
       <div className="flex items-center gap-1 overflow-x-auto px-2 pt-1">
+        <button onClick={() => setBackstageOpen(true)}
+          className="shrink-0 rounded-t-md bg-primary-600 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-primary-700">
+          ファイル
+        </button>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={
