@@ -44,7 +44,11 @@ export function applyTextFormat(
     fontWeight: string;
     fontStyle: string;
     underline: boolean;
+    linethrough: boolean;
     textAlign: string;
+    lineHeight: number;
+    charSpacing: number;
+    textBackgroundColor: string;
   }>
 ) {
   const obj = canvas.getActiveObject();
