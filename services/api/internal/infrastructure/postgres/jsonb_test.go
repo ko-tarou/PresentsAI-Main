@@ -77,3 +77,48 @@ func TestJSONBRoundTrip(t *testing.T) {
 		t.Fatalf("round-trip mismatch:\n got = %#v\nwant = %#v", got, orig)
 	}
 }
+
+func TestJSONBRawValueAndScan(t *testing.T) {
+	t.Run("empty value is SQL NULL", func(t *testing.T) {
+		var j JSONBRaw
+		v, err := j.Value()
+		if err != nil {
+			t.Fatalf("Value returned error: %v", err)
+		}
+		if v != nil {
+			t.Fatalf("Value = %v, want nil for empty JSONBRaw", v)
+		}
+	})
+
+	t.Run("nil scan yields nil", func(t *testing.T) {
+		j := JSONBRaw(`{"a":1}`)
+		if err := j.Scan(nil); err != nil {
+			t.Fatalf("Scan(nil) returned error: %v", err)
+		}
+		if j != nil {
+			t.Fatalf("after Scan(nil), JSONBRaw = %v, want nil", j)
+		}
+	})
+
+	t.Run("array round-trips", func(t *testing.T) {
+		orig := JSONBRaw(`[{"targetId":"o1","type":"fadeIn","order":0}]`)
+		v, err := orig.Value()
+		if err != nil {
+			t.Fatalf("Value returned error: %v", err)
+		}
+		var got JSONBRaw
+		if err := got.Scan(v.([]byte)); err != nil {
+			t.Fatalf("Scan returned error: %v", err)
+		}
+		if string(got) != string(orig) {
+			t.Fatalf("round-trip mismatch: got %s, want %s", got, orig)
+		}
+	})
+
+	t.Run("non-[]byte value returns error", func(t *testing.T) {
+		var j JSONBRaw
+		if err := j.Scan("not bytes"); err == nil {
+			t.Fatal("expected error for non-[]byte value, got nil")
+		}
+	})
+}

@@ -8,6 +8,11 @@ interface SlideState {
   setSlides: (slides: Slide[]) => void;
   addSlide: (slide: Slide) => void;
   updateSlide: (id: string, content: Record<string, unknown>) => void;
+  /** Update slide-level metadata (transition / animations / layoutRef / notes). */
+  updateSlideMeta: (
+    id: string,
+    meta: Partial<Pick<Slide, "transition" | "animations" | "layoutRef" | "notes">>,
+  ) => void;
   deleteSlide: (id: string) => void;
   setCurrentIndex: (index: number) => void;
 }
@@ -24,6 +29,10 @@ export const useSlideStore = create<SlideState>()((set) => ({
       slides: state.slides.map((s) =>
         s.id === id ? { ...s, content: { ...s.content, ...content } } : s
       ),
+    })),
+  updateSlideMeta: (id, meta) =>
+    set((state) => ({
+      slides: state.slides.map((s) => (s.id === id ? { ...s, ...meta } : s)),
     })),
   deleteSlide: (id) =>
     set((state) => ({
