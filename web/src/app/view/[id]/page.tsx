@@ -1,6 +1,8 @@
 "use client";
 import { use, useEffect, useRef, useState, useCallback } from "react";
 import { createCanvas, loadFromJSON, fitToContainer } from "@lib/fabric/canvas";
+import { playTransition } from "@lib/fabric/animation";
+import { modelTransitionToPreview, playSlideAnimations } from "@lib/fabric/slidePlayback";
 import type { Slide } from "@shared/types/slide";
 
 export default function ViewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,11 +17,20 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
   }, [id]);
 
   useEffect(() => {
-    if (!canvasRef.current||!slides[cur]||!containerRef.current) return;
+    const slide = slides[cur];
+    if (!canvasRef.current||!slide||!containerRef.current) return;
     const c = createCanvas(canvasRef.current);
     fitToContainer(c, containerRef.current.clientWidth);
-    loadFromJSON(c, slides[cur].content);
-    return () => { c.dispose(); };
+    let cancelled = false;
+    // Same playback the presenter sees: slide-level transition first, then the
+    // per-element entrance animations once the content is loaded.
+    (async () => {
+      const stage = c.wrapperEl;
+      if (stage) await playTransition(stage, modelTransitionToPreview(slide.transition?.type), slide.transition?.durationMs);
+      await loadFromJSON(c, slide.content);
+      if (!cancelled) await playSlideAnimations(c, slide.animations);
+    })();
+    return () => { cancelled = true; c.dispose(); };
   }, [cur, slides]);
 
   const next = useCallback(() => setCur(c=>Math.min(c+1,slides.length-1)), [slides.length]);
