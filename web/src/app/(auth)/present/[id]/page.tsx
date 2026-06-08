@@ -21,7 +21,7 @@ export default function PresentPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     if (!accessToken) return;
     slidesApi.list(accessToken, id).then(r => setSlides(r.items as Slide[]));
-    presenterRef.current = new PresenterSocket(id);
+    presenterRef.current = new PresenterSocket(id, accessToken);
     return () => { presenterRef.current?.destroy(); };
   }, [id, accessToken]);
 

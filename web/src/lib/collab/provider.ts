@@ -17,10 +17,15 @@ export class CollabProvider {
   readonly doc: Y.Doc;
   readonly roomId: string;
   private provider: WebsocketProvider | null = null;
+  // Access token for WS authorization. Forwarded to the collab server as a
+  // `token` query param (browsers cannot set WS Authorization headers), where
+  // it is verified against the shared JWT secret. null when unauthenticated.
+  private readonly token: string | null;
 
-  constructor(roomId: string, doc: Y.Doc = new Y.Doc()) {
+  constructor(roomId: string, doc: Y.Doc = new Y.Doc(), token: string | null = null) {
     this.roomId = roomId;
     this.doc = doc;
+    this.token = token;
   }
 
   /** Resolves the collab websocket endpoint (without the room segment). */
@@ -34,10 +39,14 @@ export class CollabProvider {
    */
   connect(): void {
     if (this.provider) return;
+    // y-websocket serializes `params` onto the handshake URL query string, so
+    // the token rides the same socket the relay already verifies.
+    const params = this.token ? { token: this.token } : undefined;
     this.provider = new WebsocketProvider(
       CollabProvider.endpoint(),
       this.roomId,
       this.doc,
+      { params },
     );
   }
 

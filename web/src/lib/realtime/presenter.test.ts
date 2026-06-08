@@ -1,5 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { parseSlideChange, backoffDelay, ViewerSocket, PresenterSocket, type ViewerStatus } from "./presenter";
+import { parseSlideChange, backoffDelay, withToken, ViewerSocket, PresenterSocket, type ViewerStatus } from "./presenter";
+
+describe("withToken", () => {
+  it("appends the token as a query param, preserving existing query", () => {
+    expect(withToken("ws://h/presenter?session=s", "abc")).toBe("ws://h/presenter?session=s&token=abc");
+    expect(withToken("ws://h/room", "abc")).toBe("ws://h/room?token=abc");
+  });
+  it("url-encodes the token", () => {
+    expect(withToken("ws://h/x", "a b/c")).toBe("ws://h/x?token=a%20b%2Fc");
+  });
+  it("leaves the URL untouched when no token is supplied", () => {
+    expect(withToken("ws://h/x?session=s")).toBe("ws://h/x?session=s");
+    expect(withToken("ws://h/x?session=s", null)).toBe("ws://h/x?session=s");
+    expect(withToken("ws://h/x?session=s", "")).toBe("ws://h/x?session=s");
+  });
+});
 
 describe("parseSlideChange", () => {
   it("returns the index for a well-formed slide-change frame", () => {
@@ -148,6 +163,16 @@ describe("PresenterSocket", () => {
     vi.unstubAllGlobals();
   });
 
+  it("includes the access token in the connection URL when supplied", () => {
+    new PresenterSocket("s", "tok-123");
+    expect(FakeWebSocket.instances[0].url).toContain("/presenter?session=s&token=tok-123");
+  });
+
+  it("omits the token query when none is supplied", () => {
+    new PresenterSocket("s");
+    expect(FakeWebSocket.instances[0].url).toBe("ws://localhost:8082/presenter?session=s");
+  });
+
   it("sends slide-change frames once open", () => {
     const sock = new PresenterSocket("s");
     const ws = FakeWebSocket.instances[0];
@@ -157,7 +182,7 @@ describe("PresenterSocket", () => {
   });
 
   it("re-publishes the current slide on reconnect so the server snapshot stays accurate", () => {
-    const sock = new PresenterSocket("s", () => 0);
+    const sock = new PresenterSocket("s", null, () => 0);
     const ws1 = FakeWebSocket.instances[0];
     ws1.open();
     sock.sendSlideChange(7);

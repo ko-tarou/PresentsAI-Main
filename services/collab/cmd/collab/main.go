@@ -25,7 +25,11 @@ import (
 	"github.com/ko-tarou/presentsai/services/collab/internal/store"
 )
 
-var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+// auth holds the connection authorization policy (JWT verification + origin
+// allowlist), resolved from the environment in main. upgrader delegates its
+// CheckOrigin to it so the allowlist is enforced before the WS handshake.
+var auth authConfig
+var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return auth.checkOrigin(r) }}
 
 // wsClient adapts a websocket connection to hub.Client. Outbound frames are
 // queued on a buffered channel and written by a single writer goroutine, so
@@ -76,6 +80,12 @@ func makeHandler(h *hub.Hub) http.HandlerFunc {
 			http.Error(w, "room required", http.StatusBadRequest)
 			return
 		}
+		// Collaborative editing is authenticated-only: reject before the WS
+		// handshake when the token is missing or invalid (HTTP 401, like the API).
+		if !auth.authorized(r) {
+			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+			return
+		}
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
@@ -122,6 +132,10 @@ func newStore() store.Store {
 
 func main() {
 	godotenv.Load()
+	auth = loadAuthConfig()
+	if auth.jwtSecret == "" {
+		log.Printf("collab: JWT_SECRET unset, WS token verification DISABLED (dev mode)")
+	}
 	h := hub.New(newStore())
 
 	mux := http.NewServeMux()
