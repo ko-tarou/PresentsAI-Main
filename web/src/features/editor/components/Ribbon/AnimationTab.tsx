@@ -6,6 +6,7 @@ import { useSlideStore } from "../../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
 import { animateEntrance, type EntranceType } from "@lib/fabric/animation";
+import { ensureObjectId } from "@lib/fabric/objectId";
 import type { ElementAnimation, ElementAnimationType } from "@shared/types/slide";
 
 import { RibbonGroup, RibbonDivider, RibbonBigButton } from "./ribbonPrimitives";
@@ -31,11 +32,11 @@ export function toModelAnimation(t: EntranceType): ElementAnimationType {
   }
 }
 
-// Resolve a stable target id for an active object: its index in the canvas
-// object list. Playback (next PR) reads this back from the saved animation.
-function targetIdFor(canvas: NonNullable<ReturnType<typeof useEditorStore.getState>["canvas"]>, obj: object): string | null {
-  const idx = canvas.getObjects().indexOf(obj as never);
-  return idx >= 0 ? String(idx) : null;
+// Resolve a stable target id for an active object. Unlike the object's index
+// (which shifts on add/remove/reorder), this id is persisted with the object
+// and survives save/load, so playback can reliably find the same element.
+function targetIdFor(_canvas: NonNullable<ReturnType<typeof useEditorStore.getState>["canvas"]>, obj: object): string | null {
+  return ensureObjectId(obj as Parameters<typeof ensureObjectId>[0]);
 }
 
 export function AnimationTab() {
