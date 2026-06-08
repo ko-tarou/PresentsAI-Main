@@ -98,6 +98,31 @@ func (h *SlideHandler) HandleUpdateNotes(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, s)
 }
 
+func (h *SlideHandler) HandleUpdateMeta(w http.ResponseWriter, r *http.Request) {
+	ownerID := r.Context().Value(middleware.UserIDKey).(string)
+	id := mux.Vars(r)["slideId"]
+	// Pointer fields distinguish "absent" (leave unchanged) from "present".
+	var req struct {
+		Transition *domainSlide.Transition        `json:"transition"`
+		Animations []domainSlide.ElementAnimation `json:"animations"`
+		LayoutRef  *string                        `json:"layoutRef"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	s, err := h.uc.UpdateMeta(r.Context(), id, ownerID, appSlide.SlideMeta{
+		Transition: req.Transition,
+		Animations: req.Animations,
+		LayoutRef:  req.LayoutRef,
+	})
+	if err != nil {
+		writeHTTPError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, s)
+}
+
 func (h *SlideHandler) HandleReorder(w http.ResponseWriter, r *http.Request) {
 	ownerID := r.Context().Value(middleware.UserIDKey).(string)
 	presentationID := mux.Vars(r)["id"]

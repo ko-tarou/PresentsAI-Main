@@ -67,6 +67,38 @@ func (uc *UseCase) UpdateContent(ctx context.Context, id, ownerID string, conten
 	return s, uc.repo.Update(ctx, s)
 }
 
+// SlideMeta carries the slide-level presentation metadata that can be updated
+// independently of the canvas content. Nil fields are left unchanged.
+type SlideMeta struct {
+	Transition *domainSlide.Transition
+	Animations []domainSlide.ElementAnimation
+	LayoutRef  *string
+}
+
+// UpdateMeta persists slide-level transition / animations / layoutRef.
+// Only the non-nil fields of meta are applied; the rest are preserved.
+func (uc *UseCase) UpdateMeta(ctx context.Context, id, ownerID string, meta SlideMeta) (*domainSlide.Slide, error) {
+	s, err := uc.Get(ctx, id, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if meta.Transition != nil {
+		// A transition of type "none" clears the stored transition.
+		if meta.Transition.Type == "" || meta.Transition.Type == "none" {
+			s.Transition = nil
+		} else {
+			s.Transition = meta.Transition
+		}
+	}
+	if meta.Animations != nil {
+		s.Animations = meta.Animations
+	}
+	if meta.LayoutRef != nil {
+		s.LayoutRef = *meta.LayoutRef
+	}
+	return s, uc.repo.Update(ctx, s)
+}
+
 func (uc *UseCase) UpdateNotes(ctx context.Context, id, ownerID, notes string) (*domainSlide.Slide, error) {
 	s, err := uc.Get(ctx, id, ownerID)
 	if err != nil {

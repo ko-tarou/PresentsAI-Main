@@ -1,5 +1,12 @@
 import { apiClient } from "./api-client";
-import type { Slide, SlideContent } from "@shared/types/slide";
+import type { Slide, SlideContent, SlideTransition, ElementAnimation } from "@shared/types/slide";
+
+/** Slide-level metadata that can be persisted independently of canvas content. */
+export interface SlideMetaUpdate {
+  transition?: SlideTransition;
+  animations?: ElementAnimation[];
+  layoutRef?: string;
+}
 
 function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
@@ -32,6 +39,10 @@ export const slidesApi = {
     }),
   updateNotes: (token: string, presentationId: string, slideId: string, notes: string) =>
     apiClient.patch<Slide>(`/presentations/${presentationId}/slides/${slideId}/notes`, { notes }, {
+      headers: authHeaders(token),
+    }),
+  updateMeta: (token: string, presentationId: string, slideId: string, meta: SlideMetaUpdate) =>
+    apiClient.patch<Slide>(`/presentations/${presentationId}/slides/${slideId}/meta`, meta, {
       headers: authHeaders(token),
     }),
 };

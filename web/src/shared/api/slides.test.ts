@@ -75,4 +75,17 @@ describe("slidesApi", () => {
       auth
     );
   });
+
+  it("updateMeta calls PATCH /presentations/:pid/slides/:slideId/meta with the meta payload", () => {
+    const meta = {
+      transition: { type: "fade" as const, durationMs: 400 },
+      animations: [{ targetId: "0", type: "fadeIn" as const, order: 0, durationMs: 600 }],
+    };
+    slidesApi.updateMeta(TOKEN, PID, "s-1", meta);
+    expect(patch).toHaveBeenCalledWith(
+      `/presentations/${PID}/slides/s-1/meta`,
+      meta,
+      auth
+    );
+  });
 });
