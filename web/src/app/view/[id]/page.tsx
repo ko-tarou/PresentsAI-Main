@@ -9,7 +9,7 @@ import type { Slide } from "@shared/types/slide";
 const STATUS_LABEL: Record<ViewerStatus, string> = {
   connecting: "接続中…",
   connected: "発表者に同期中",
-  disconnected: "切断 — 手動操作",
+  disconnected: "切断 — 再接続中（手動操作可）",
 };
 
 export default function ViewPage({ params }: { params: Promise<{ id: string }> }) {
