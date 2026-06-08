@@ -53,7 +53,7 @@ class FakeWebSocket {
   static OPEN = 1;
   static instances: FakeWebSocket[] = [];
   onopen: (() => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((e?: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
   onmessage: ((e: { data: unknown }) => void) | null = null;
   readyState = 0;
@@ -181,8 +181,28 @@ describe("PresenterSocket", () => {
     expect(ws.sent).toContain(JSON.stringify({ type: "slide-change", slideIndex: 3 }));
   });
 
+  it("stops reconnecting and reports 'rejected' on a 1008 presenter-taken close", () => {
+    const statuses: ViewerStatus[] = [];
+    new PresenterSocket("s", null, (st) => statuses.push(st), () => 0);
+    const ws = FakeWebSocket.instances[0];
+    ws.open();
+    ws.onclose?.({ code: 1008 }); // server: presenter already connected
+    expect(statuses).toContain("rejected");
+    vi.advanceTimersByTime(60_000);
+    expect(FakeWebSocket.instances).toHaveLength(1); // no reconnect after rejection
+  });
+
+  it("still reconnects on a normal (non-1008) drop", () => {
+    new PresenterSocket("s", null, undefined, () => 0);
+    const ws = FakeWebSocket.instances[0];
+    ws.open();
+    ws.onclose?.({ code: 1006 }); // abnormal closure → transient
+    vi.advanceTimersByTime(500);
+    expect(FakeWebSocket.instances).toHaveLength(2);
+  });
+
   it("re-publishes the current slide on reconnect so the server snapshot stays accurate", () => {
-    const sock = new PresenterSocket("s", null, () => 0);
+    const sock = new PresenterSocket("s", null, undefined, () => 0);
     const ws1 = FakeWebSocket.instances[0];
     ws1.open();
     sock.sendSlideChange(7);

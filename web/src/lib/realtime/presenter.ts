@@ -1,5 +1,15 @@
-/** Connection lifecycle reported to the UI. */
-export type ViewerStatus = "connecting" | "connected" | "disconnected";
+/**
+ * Connection lifecycle reported to the UI. "rejected" is a terminal state: the
+ * server refused the connection (e.g. a presenter slot is already taken) and we
+ * stop reconnecting, unlike the transient "disconnected".
+ */
+export type ViewerStatus = "connecting" | "connected" | "disconnected" | "rejected";
+
+/**
+ * WebSocket close code the realtime server uses to reject a duplicate presenter
+ * (RFC 6455 PolicyViolation). Matches services/realtime FormatCloseMessage.
+ */
+export const PRESENTER_TAKEN_CODE = 1008;
 
 export interface ViewerSocketHandlers {
   onSlideChange: (index: number) => void;
@@ -84,16 +94,23 @@ class ReconnectingSocket {
       this.onOpen();
     };
     ws.onmessage = (e) => this.onMessage(e.data);
-    ws.onclose = () => this.handleDrop();
+    ws.onclose = (e) => this.handleDrop(e?.code);
     ws.onerror = () => this.handleDrop();
   }
 
-  private handleDrop() {
+  private handleDrop(code?: number) {
     if (this.closedByUs) return;
     // Detach so a duplicate close/error from the same dead socket cannot trigger
     // a second reconnect schedule.
     if (this.ws) {
       this.ws.onopen = this.ws.onmessage = this.ws.onclose = this.ws.onerror = null;
+    }
+    // A close the subclass deems terminal (e.g. presenter slot taken) stops the
+    // reconnect loop entirely and reports the fatal status instead.
+    if (code !== undefined && !this.shouldReconnect(code)) {
+      this.closedByUs = true;
+      this.onStatus("rejected");
+      return;
     }
     this.onStatus("disconnected");
     const delay = backoffDelay(this.attempt++, this.rand);
@@ -118,6 +135,13 @@ class ReconnectingSocket {
   protected onOpen(): void {}
   protected onMessage(_data: unknown): void {}
   protected onStatus(_status: ViewerStatus): void {}
+  /**
+   * Whether to reconnect after a close with the given code. Default: always
+   * (transient drop). Subclasses override to treat specific codes as terminal.
+   */
+  protected shouldReconnect(_code: number): boolean {
+    return true;
+  }
 }
 
 /**
@@ -127,15 +151,33 @@ class ReconnectingSocket {
  */
 export class PresenterSocket extends ReconnectingSocket {
   private lastIndex = 0;
+  private readonly onStatusCb?: (status: ViewerStatus) => void;
 
-  constructor(sessionId: string, token?: string | null, rand: () => number = Math.random) {
+  constructor(
+    sessionId: string,
+    token?: string | null,
+    onStatus?: (status: ViewerStatus) => void,
+    rand: () => number = Math.random,
+  ) {
     super(withToken(`${realtimeBase()}/presenter?session=${sessionId}`, token), rand);
+    this.onStatusCb = onStatus;
     this.start();
   }
 
   protected onOpen(): void {
     // Re-publish current position so a freshly (re)connected server snapshots it.
     this.transmit(this.lastIndex);
+  }
+
+  protected onStatus(status: ViewerStatus): void {
+    this.onStatusCb?.(status);
+  }
+
+  // The realtime server enforces a single presenter: a second presenter is
+  // closed with PolicyViolation (1008). That is terminal — do not reconnect,
+  // surface "rejected" so the UI can tell the user someone else is presenting.
+  protected shouldReconnect(code: number): boolean {
+    return code !== PRESENTER_TAKEN_CODE;
   }
 
   sendSlideChange(index: number) {

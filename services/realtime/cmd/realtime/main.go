@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
@@ -59,12 +60,31 @@ func handlePresenter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sess := getSession(sessionID)
+	// Single-presenter exclusion (first-come wins): atomically claim the
+	// presenter slot. If another presenter is already connected, this second
+	// connection is rejected with a PolicyViolation close (1008) carrying a
+	// reason the client surfaces, then closed without entering the read loop —
+	// so it never clears the incumbent's slot.
 	sess.mu.Lock()
+	if sess.presenter != nil {
+		sess.mu.Unlock()
+		conn.WriteControl(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "presenter already connected"),
+			time.Now().Add(time.Second),
+		)
+		conn.Close()
+		return
+	}
 	sess.presenter = conn
 	sess.mu.Unlock()
 	defer func() {
 		sess.mu.Lock()
-		sess.presenter = nil
+		// Only relinquish the slot if we still own it (defensive: a future
+		// takeover policy could swap it out from under us).
+		if sess.presenter == conn {
+			sess.presenter = nil
+		}
 		sess.mu.Unlock()
 		conn.Close()
 	}()
