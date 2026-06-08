@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { parseSlideChange, ViewerSocket, type ViewerStatus } from "./presenter";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { parseSlideChange, backoffDelay, ViewerSocket, PresenterSocket, type ViewerStatus } from "./presenter";
 
 describe("parseSlideChange", () => {
   it("returns the index for a well-formed slide-change frame", () => {
@@ -17,8 +17,25 @@ describe("parseSlideChange", () => {
   });
 });
 
+describe("backoffDelay", () => {
+  it("grows exponentially from 500ms and caps at 10s (no jitter)", () => {
+    const noJitter = () => 0;
+    expect(backoffDelay(0, noJitter)).toBe(500);
+    expect(backoffDelay(1, noJitter)).toBe(1000);
+    expect(backoffDelay(2, noJitter)).toBe(2000);
+    expect(backoffDelay(3, noJitter)).toBe(4000);
+    expect(backoffDelay(10, noJitter)).toBe(10_000); // capped
+  });
+
+  it("adds up to 30% jitter", () => {
+    expect(backoffDelay(0, () => 1)).toBe(650); // 500 * 1.3
+    expect(backoffDelay(1, () => 1)).toBe(1300); // 1000 * 1.3
+  });
+});
+
 // Minimal WebSocket stand-in so we can drive lifecycle + messages without a server.
 class FakeWebSocket {
+  static OPEN = 1;
   static instances: FakeWebSocket[] = [];
   onopen: (() => void) | null = null;
   onclose: (() => void) | null = null;
@@ -26,16 +43,24 @@ class FakeWebSocket {
   onmessage: ((e: { data: unknown }) => void) | null = null;
   readyState = 0;
   closed = false;
+  sent: string[] = [];
   constructor(public url: string) {
     FakeWebSocket.instances.push(this);
   }
+  send(data: string) { this.sent.push(data); }
   close() { this.closed = true; }
+  open() { this.readyState = FakeWebSocket.OPEN; this.onopen?.(); }
 }
 
 describe("ViewerSocket", () => {
   beforeEach(() => {
     FakeWebSocket.instances = [];
     vi.stubGlobal("WebSocket", FakeWebSocket as unknown as typeof WebSocket);
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("reports connecting immediately, then connected on open", () => {
@@ -44,7 +69,7 @@ describe("ViewerSocket", () => {
     const ws = FakeWebSocket.instances[0];
     expect(ws.url).toContain("/viewer?session=sess-1");
     expect(statuses).toEqual(["connecting"]);
-    ws.onopen?.();
+    ws.open();
     expect(statuses).toEqual(["connecting", "connected"]);
   });
 
@@ -58,24 +83,90 @@ describe("ViewerSocket", () => {
     expect(seen).toEqual([5]);
   });
 
-  it("reports disconnected on close and error", () => {
+  it("reconnects with backoff after an unexpected close, reporting disconnected then connecting", () => {
     const statuses: ViewerStatus[] = [];
-    new ViewerSocket("s", { onSlideChange: () => {}, onStatus: (st) => statuses.push(st) });
+    new ViewerSocket("s", { onSlideChange: () => {}, onStatus: (st) => statuses.push(st) }, () => 0);
     const ws = FakeWebSocket.instances[0];
-    ws.onclose?.();
-    ws.onerror?.();
-    expect(statuses).toEqual(["connecting", "disconnected", "disconnected"]);
+    ws.open();
+    expect(statuses).toEqual(["connecting", "connected"]);
+
+    ws.onclose?.(); // server drop
+    expect(statuses).toEqual(["connecting", "connected", "disconnected"]);
+    expect(FakeWebSocket.instances).toHaveLength(1); // not yet reconnected
+
+    vi.advanceTimersByTime(500); // first backoff step
+    expect(FakeWebSocket.instances).toHaveLength(2); // reconnect attempted
+    expect(statuses).toEqual(["connecting", "connected", "disconnected", "connecting"]);
   });
 
-  it("detaches handlers and closes the socket on destroy", () => {
+  it("backs off progressively across repeated drops", () => {
+    new ViewerSocket("s", { onSlideChange: () => {} }, () => 0);
+    FakeWebSocket.instances[0].onclose?.();
+    vi.advanceTimersByTime(499);
+    expect(FakeWebSocket.instances).toHaveLength(1); // not reconnected before 500ms
+    vi.advanceTimersByTime(1);
+    expect(FakeWebSocket.instances).toHaveLength(2);
+
+    FakeWebSocket.instances[1].onclose?.();
+    vi.advanceTimersByTime(999);
+    expect(FakeWebSocket.instances).toHaveLength(2); // 2nd attempt waits 1000ms
+    vi.advanceTimersByTime(1);
+    expect(FakeWebSocket.instances).toHaveLength(3);
+  });
+
+  it("a duplicate close/error from the same dead socket schedules only one reconnect", () => {
+    new ViewerSocket("s", { onSlideChange: () => {} }, () => 0);
+    const ws = FakeWebSocket.instances[0];
+    ws.onclose?.();
+    ws.onerror?.(); // handlers were detached, so this is a no-op
+    vi.advanceTimersByTime(500);
+    expect(FakeWebSocket.instances).toHaveLength(2); // exactly one reconnect
+  });
+
+  it("stops reconnecting and closes the socket on destroy", () => {
     const statuses: ViewerStatus[] = [];
-    const sock = new ViewerSocket("s", { onSlideChange: () => {}, onStatus: (st) => statuses.push(st) });
+    const sock = new ViewerSocket("s", { onSlideChange: () => {}, onStatus: (st) => statuses.push(st) }, () => 0);
     const ws = FakeWebSocket.instances[0];
     sock.destroy();
     expect(ws.closed).toBe(true);
     expect(ws.onclose).toBeNull();
     expect(ws.onmessage).toBeNull();
-    // a stray close after destroy must not push another status update
+    vi.advanceTimersByTime(60_000);
+    expect(FakeWebSocket.instances).toHaveLength(1); // no reconnect after destroy
     expect(statuses).toEqual(["connecting"]);
+  });
+});
+
+describe("PresenterSocket", () => {
+  beforeEach(() => {
+    FakeWebSocket.instances = [];
+    vi.stubGlobal("WebSocket", FakeWebSocket as unknown as typeof WebSocket);
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("sends slide-change frames once open", () => {
+    const sock = new PresenterSocket("s");
+    const ws = FakeWebSocket.instances[0];
+    ws.open();
+    sock.sendSlideChange(3);
+    expect(ws.sent).toContain(JSON.stringify({ type: "slide-change", slideIndex: 3 }));
+  });
+
+  it("re-publishes the current slide on reconnect so the server snapshot stays accurate", () => {
+    const sock = new PresenterSocket("s", () => 0);
+    const ws1 = FakeWebSocket.instances[0];
+    ws1.open();
+    sock.sendSlideChange(7);
+
+    ws1.onclose?.(); // drop
+    vi.advanceTimersByTime(500); // reconnect
+    const ws2 = FakeWebSocket.instances[1];
+    ws2.open();
+    // On reconnect, the presenter re-sends slide 7 (its remembered position).
+    expect(ws2.sent).toContain(JSON.stringify({ type: "slide-change", slideIndex: 7 }));
   });
 });
