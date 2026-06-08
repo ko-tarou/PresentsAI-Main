@@ -1,25 +1,63 @@
-export interface CollabMessage { type: "update"|"presence"; data: unknown; userId?: string; }
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
+import { getSlides, type YSlideMap } from "./schema";
 
+/**
+ * Collaboration provider backed by `y-websocket`.
+ *
+ * One provider == one presentation "room". The Yjs doc is the source of truth
+ * (ADR-0011); this class only owns connection lifecycle (connect / disconnect /
+ * auto-reconnect, handled by y-websocket) and exposes the shared doc + slide
+ * array. Fabric two-way binding and awareness are intentionally out of scope
+ * for this PR.
+ */
 export class CollabProvider {
-  private ws: WebSocket|null=null;
-  private roomId: string;
-  private onMsg: (m: CollabMessage)=>void;
-  private timer: ReturnType<typeof setTimeout>|null=null;
+  readonly doc: Y.Doc;
+  readonly roomId: string;
+  private provider: WebsocketProvider | null = null;
 
-  constructor(roomId: string, onMsg: (m: CollabMessage)=>void) {
-    this.roomId=roomId; this.onMsg=onMsg; this.connect();
+  constructor(roomId: string, doc: Y.Doc = new Y.Doc()) {
+    this.roomId = roomId;
+    this.doc = doc;
   }
 
-  private connect() {
-    const url=`${process.env.NEXT_PUBLIC_COLLAB_URL??"ws://localhost:8081"}/ws?room=${this.roomId}`;
-    this.ws=new WebSocket(url);
-    this.ws.onmessage=e=>{
-      try { this.onMsg(JSON.parse(e.data as string) as CollabMessage); }
-      catch { this.onMsg({type:"update",data:e.data}); }
-    };
-    this.ws.onclose=()=>{ this.timer=setTimeout(()=>this.connect(),3000); };
+  /** Resolves the collab websocket endpoint (without the room segment). */
+  private static endpoint(): string {
+    return process.env.NEXT_PUBLIC_COLLAB_URL ?? "ws://localhost:8081";
   }
 
-  send(msg: CollabMessage) { if (this.ws?.readyState===WebSocket.OPEN) this.ws.send(JSON.stringify(msg)); }
-  destroy() { if (this.timer) clearTimeout(this.timer); this.ws?.close(); }
+  /**
+   * Opens the websocket connection for this room. y-websocket handles
+   * reconnection with exponential backoff internally.
+   */
+  connect(): void {
+    if (this.provider) return;
+    this.provider = new WebsocketProvider(
+      CollabProvider.endpoint(),
+      this.roomId,
+      this.doc,
+    );
+  }
+
+  /** True once the underlying socket has reached the connected state. */
+  get connected(): boolean {
+    return this.provider?.wsconnected ?? false;
+  }
+
+  /** The shared, ordered slide list (Y.Array<Y.Map>). */
+  get slides(): Y.Array<YSlideMap> {
+    return getSlides(this.doc);
+  }
+
+  /** Closes the socket and tears down the provider, keeping the doc intact. */
+  disconnect(): void {
+    this.provider?.destroy();
+    this.provider = null;
+  }
+
+  /** Full teardown: disconnect and destroy the underlying Yjs doc. */
+  destroy(): void {
+    this.disconnect();
+    this.doc.destroy();
+  }
 }

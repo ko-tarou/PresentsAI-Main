@@ -1,39 +1,28 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { CollabProvider } from "@lib/collab/provider";
-import { useEditorStore } from "../stores/editorStore";
-import { useSlideStore } from "../stores/slideStore";
-import { loadFromJSON, toJSON } from "@lib/fabric/canvas";
 
+/**
+ * Minimal collaboration wiring for PR1: opens a y-websocket room for the given
+ * presentation and holds a reference to the shared Yjs doc. Fabric two-way
+ * binding (PR3) and awareness (PR5) are intentionally not wired up yet.
+ *
+ * @returns the live {@link CollabProvider} (or null before connect), so callers
+ *          can reach the shared doc / slide array.
+ */
 export function useCollaboration(presentationId: string | null) {
   const providerRef = useRef<CollabProvider | null>(null);
-  const { canvas, activeSlideId } = useEditorStore();
-  const { updateSlide } = useSlideStore();
 
   useEffect(() => {
     if (!presentationId) return;
-    providerRef.current = new CollabProvider(presentationId, (msg) => {
-      if (msg.type === "update" && canvas && activeSlideId) {
-        try {
-          const data =
-            typeof msg.data === "string"
-              ? (JSON.parse(msg.data) as Record<string, unknown>)
-              : (msg.data as Record<string, unknown>);
-          loadFromJSON(canvas, data).then(() => {
-            canvas.renderAll();
-            updateSlide(activeSlideId, data);
-          });
-        } catch { /* ignore malformed messages */ }
-      }
-    });
+    const provider = new CollabProvider(presentationId);
+    provider.connect();
+    providerRef.current = provider;
     return () => {
-      providerRef.current?.destroy();
+      provider.destroy();
+      providerRef.current = null;
     };
-  }, [presentationId, canvas, activeSlideId, updateSlide]);
+  }, [presentationId]);
 
-  const broadcast = (slideContent: Record<string, unknown>) => {
-    providerRef.current?.send({ type: "update", data: slideContent });
-  };
-
-  return { broadcast };
+  return { provider: providerRef.current };
 }
