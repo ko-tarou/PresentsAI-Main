@@ -19,8 +19,10 @@
 package hub
 
 import (
+	"log"
 	"sync"
 
+	"github.com/ko-tarou/presentsai/services/collab/internal/store"
 	"github.com/ko-tarou/presentsai/services/collab/internal/yproto"
 )
 
@@ -37,34 +39,56 @@ type Client interface {
 // Room holds the connected clients and the accumulated opaque update log
 // for a single presentation.
 type Room struct {
+	id    string
+	store store.Store
+
 	mu      sync.RWMutex
 	clients map[Client]struct{}
-	// updates is the append-only log of opaque Yjs updates seen in this
-	// room. Order is not significant for correctness (Yjs merges are
-	// commutative & idempotent) but is preserved for determinism.
+	// updates is the in-memory cache of the room's opaque Yjs update log,
+	// hydrated from the Store on first use. Order is not significant for
+	// correctness (Yjs merges are commutative & idempotent) but is preserved
+	// for determinism and matches the persisted order.
 	updates [][]byte
 }
 
-func newRoom() *Room {
-	return &Room{clients: make(map[Client]struct{})}
+func newRoom(id string, s store.Store) *Room {
+	r := &Room{id: id, store: s, clients: make(map[Client]struct{})}
+	// Hydrate the in-memory log from durable storage so a freshly started
+	// server (or a room re-created after going idle) restores prior state and
+	// can re-seed newcomers. This makes the server — not the first client —
+	// the source of the baseline (ADR-0011 single-seed model).
+	if loaded, err := s.Load(id); err != nil {
+		log.Printf("collab: load room %q failed: %v", id, err)
+	} else {
+		r.updates = loaded
+	}
+	return r
 }
 
-// Hub manages all rooms.
+// Hub manages all rooms and owns the persistence backend.
 type Hub struct {
+	store store.Store
 	mu    sync.Mutex
 	rooms map[string]*Room
 }
 
-// New returns an empty Hub.
-func New() *Hub { return &Hub{rooms: make(map[string]*Room)} }
+// New returns a Hub backed by the given Store. A nil store falls back to an
+// in-memory store (no durability), which keeps existing tests/usage working.
+func New(s store.Store) *Hub {
+	if s == nil {
+		s = store.NewMemStore()
+	}
+	return &Hub{store: s, rooms: make(map[string]*Room)}
+}
 
-// Room returns the room with the given id, creating it on first use.
+// Room returns the room with the given id, creating (and restoring) it on
+// first use.
 func (h *Hub) Room(id string) *Room {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	r, ok := h.rooms[id]
 	if !ok {
-		r = newRoom()
+		r = newRoom(id, h.store)
 		h.rooms[id] = r
 	}
 	return r
@@ -154,6 +178,11 @@ func (r *Room) handleSync(sender Client, dec *yproto.Decoder, original []byte) {
 			return
 		}
 		stored := append([]byte(nil), update...) // copy: msg buffer is reused
+		// Persist first so a crash between cache + broadcast cannot leave a
+		// durable gap; broadcast/cache are best-effort relay on top.
+		if err := r.store.Append(r.id, stored); err != nil {
+			log.Printf("collab: persist update for room %q failed: %v", r.id, err)
+		}
 		r.mu.Lock()
 		r.updates = append(r.updates, stored)
 		r.mu.Unlock()

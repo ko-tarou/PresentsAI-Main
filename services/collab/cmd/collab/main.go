@@ -3,7 +3,9 @@
 // It speaks the y-protocol message framing (sync / awareness) and relays
 // opaque Yjs updates between clients in the same room. It does NOT interpret
 // CRDT contents; the authoritative merge happens in each client's Yjs doc
-// (ADR-0010/0011). Persistence is currently in-memory only (PR4 adds Postgres).
+// (ADR-0010/0011). The opaque update log is persisted via internal/store
+// (PostgreSQL when DATABASE_URL is set, else in-memory), so room state survives
+// restarts and the server re-seeds every newcomer (single-seed model).
 //
 // y-websocket connects to `ws://host:port/{roomname}`, so the room id is the
 // URL path segment.
@@ -20,6 +22,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/ko-tarou/presentsai/services/collab/internal/hub"
+	"github.com/ko-tarou/presentsai/services/collab/internal/store"
 )
 
 var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
@@ -100,9 +103,26 @@ func makeHandler(h *hub.Hub) http.HandlerFunc {
 	}
 }
 
+// newStore picks the persistence backend: Postgres when DATABASE_URL is set,
+// otherwise an in-memory store (no durability). A Postgres failure is fatal so
+// misconfiguration is loud rather than silently losing collaborative state.
+func newStore() store.Store {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Printf("collab: DATABASE_URL unset, using in-memory store (no persistence)")
+		return store.NewMemStore()
+	}
+	pg, err := store.NewPostgresStore(dsn)
+	if err != nil {
+		log.Fatalf("collab: postgres store init failed: %v", err)
+	}
+	log.Printf("collab: using PostgreSQL persistence")
+	return pg
+}
+
 func main() {
 	godotenv.Load()
-	h := hub.New()
+	h := hub.New(newStore())
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

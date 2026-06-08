@@ -57,7 +57,7 @@ func readBinary(t *testing.T, c *websocket.Conn) []byte {
 // TestE2ESyncStep1OverWebsocket: a client connecting to a populated room over a
 // real websocket receives the snapshot replay followed by the server SyncStep1.
 func TestE2ESyncStep1OverWebsocket(t *testing.T) {
-	h := hub.New()
+	h := hub.New(nil)
 	srv := httptest.NewServer(makeHandler(h))
 	defer srv.Close()
 
@@ -98,7 +98,7 @@ func TestE2ESyncStep1OverWebsocket(t *testing.T) {
 // TestE2EBroadcastBetweenTwoClients: an update from one client is relayed to a
 // second client in the same room over real websockets.
 func TestE2EBroadcastBetweenTwoClients(t *testing.T) {
-	h := hub.New()
+	h := hub.New(nil)
 	srv := httptest.NewServer(makeHandler(h))
 	defer srv.Close()
 
@@ -120,7 +120,7 @@ func TestE2EBroadcastBetweenTwoClients(t *testing.T) {
 
 // TestE2EHealth: the /health endpoint stays a plain JSON probe, not a room.
 func TestE2EHealth(t *testing.T) {
-	h := hub.New()
+	h := hub.New(nil)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"status":"ok"}`))
