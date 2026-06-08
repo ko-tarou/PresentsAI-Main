@@ -1,28 +1,32 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import * as Y from "yjs";
 import { CollabProvider } from "@lib/collab/provider";
 
 /**
- * Minimal collaboration wiring for PR1: opens a y-websocket room for the given
- * presentation and holds a reference to the shared Yjs doc. Fabric two-way
- * binding (PR3) and awareness (PR5) are intentionally not wired up yet.
+ * Opens a y-websocket room for the given presentation and exposes the shared
+ * Yjs doc reactively, so callers (the Fabric two-way binding, PR3) can bind to
+ * it once it exists. Awareness (PR5) is still out of scope.
  *
- * @returns the live {@link CollabProvider} (or null before connect), so callers
- *          can reach the shared doc / slide array.
+ * @returns the live {@link CollabProvider} and its shared {@link Y.Doc} (both
+ *          null before connect), kept in state so consumers re-render on connect.
  */
 export function useCollaboration(presentationId: string | null) {
-  const providerRef = useRef<CollabProvider | null>(null);
+  const [provider, setProvider] = useState<CollabProvider | null>(null);
+  const [doc, setDoc] = useState<Y.Doc | null>(null);
 
   useEffect(() => {
     if (!presentationId) return;
-    const provider = new CollabProvider(presentationId);
-    provider.connect();
-    providerRef.current = provider;
+    const p = new CollabProvider(presentationId);
+    p.connect();
+    setProvider(p);
+    setDoc(p.doc);
     return () => {
-      provider.destroy();
-      providerRef.current = null;
+      p.destroy();
+      setProvider(null);
+      setDoc(null);
     };
   }, [presentationId]);
 
-  return { provider: providerRef.current };
+  return { provider, doc };
 }
