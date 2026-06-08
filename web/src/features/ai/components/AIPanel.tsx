@@ -33,7 +33,7 @@ export function AIPanel() {
         setResult(r);
       }
     } catch {
-      setResult("エラー: localhost:4242 が起動していることを確認してください。");
+      setResult("エラー: AI サービスに接続できませんでした。しばらくして再試行してください。");
     } finally { setLoading(false); }
   }
 
@@ -42,7 +42,7 @@ export function AIPanel() {
       <h2 className="flex items-center gap-2 text-sm font-semibold text-content-primary">
         <Bot className="h-4 w-4 text-primary-600" /> AI アシスタント
       </h2>
-      <p className="text-xs text-content-tertiary">LFM2-2.6B ローカル</p>
+      <p className="text-xs text-content-tertiary">AI アシスタント</p>
       <div className="flex gap-1">
         {(["improve","generate","outline"] as const).map(m=>(
           <button key={m} onClick={()=>setMode(m)} className={`flex-1 rounded-lg py-1 text-xs font-medium transition-colors ${mode===m?"bg-primary-600 text-white":"bg-surface-muted text-content-secondary hover:bg-surface-subtle"}`}>

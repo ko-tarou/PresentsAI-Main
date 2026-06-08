@@ -24,7 +24,7 @@ export function PresentationReport({ transcript }: { transcript: string }) {
       );
       setReport(r);
     } catch {
-      setReport({ summary:"LFM Gateway が必要です", strengths:[], improvements:[], score:0 });
+      setReport({ summary:"AI サービスに接続できませんでした", strengths:[], improvements:[], score:0 });
     } finally { setLoading(false); }
   }
 
