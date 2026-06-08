@@ -28,6 +28,7 @@ import { StylePanel, TokenPanel, ImagePanel } from "@features/editor/components/
 import { AIPanel } from "@features/ai/components/AIPanel";
 import { RealtimeCoach } from "@features/ai/components/RealtimeCoach";
 import { SpeakerNotesPanel } from "@features/editor/components/SpeakerNotes";
+import { LayersPanel } from "@features/editor/components/LayersPanel";
 import type { Slide } from "@shared/types/slide";
 
 type AITab = "ai" | "coach" | null;
@@ -36,14 +37,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas, showLayers } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
 
   // Open the collaboration room and bind the active slide's canvas to it.
   const { provider, doc } = useCollaboration(id ?? null, accessToken);
-  useObjectBinding(doc, canvas, activeSlideId);
+  const { moveObject } = useObjectBinding(doc, canvas, activeSlideId);
   // Live presence: publish/read other editors' slide + selection (ephemeral).
   const { peers } = usePresence(provider, canvas, activeSlideId);
   // Collaborative slide-list structure (add / remove / move) + JSONB projection.
@@ -145,6 +146,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
             {notesVisible && <SpeakerNotesPanel />}
           </main>
+          {showLayers && <LayersPanel moveObject={moveObject} />}
           <aside className="flex w-56 shrink-0 flex-col border-l bg-white overflow-y-auto">
             <StylePanel />
             <TokenPanel />
