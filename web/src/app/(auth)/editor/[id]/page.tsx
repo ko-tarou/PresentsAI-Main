@@ -28,6 +28,7 @@ import { StylePanel, TokenPanel, ImagePanel } from "@features/editor/components/
 import { AIPanel } from "@features/ai/components/AIPanel";
 import { RealtimeCoach } from "@features/ai/components/RealtimeCoach";
 import { SpeakerNotesPanel } from "@features/editor/components/SpeakerNotes";
+import { CommentsPanel } from "@features/editor/components/CommentsPanel";
 import type { Slide } from "@shared/types/slide";
 
 type AITab = "ai" | "coach" | null;
@@ -36,7 +37,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas, showComments } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
@@ -155,6 +156,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               {aiTab === "ai" ? <AIPanel /> : <RealtimeCoach />}
             </aside>
           )}
+          {showComments && <CommentsPanel />}
         </div>
       )}
 

@@ -14,6 +14,7 @@ interface EditorState {
   notesVisible: boolean;
   viewMode: ViewMode;
   showRuler: boolean;
+  showComments: boolean;
 
   setCanvas: (canvas: Canvas | null) => void;
   setActiveTool: (tool: EditorTool) => void;
@@ -26,6 +27,8 @@ interface EditorState {
   setViewMode: (mode: ViewMode) => void;
   toggleRuler: () => void;
   setShowRuler: (show: boolean) => void;
+  toggleComments: () => void;
+  setShowComments: (show: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -38,6 +41,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   notesVisible: true,
   viewMode: "normal",
   showRuler: false,
+  showComments: false,
 
   setCanvas: (canvas) => set({ canvas }),
   setActiveTool: (activeTool) => set({ activeTool }),
@@ -50,4 +54,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setViewMode: (viewMode) => set({ viewMode }),
   toggleRuler: () => set((s) => ({ showRuler: !s.showRuler })),
   setShowRuler: (showRuler) => set({ showRuler }),
+  toggleComments: () => set((s) => ({ showComments: !s.showComments })),
+  setShowComments: (showComments) => set({ showComments }),
 }));
