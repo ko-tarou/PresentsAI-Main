@@ -5,7 +5,7 @@ import { slidesApi } from "@shared/api/slides";
 import { createCanvas, loadFromJSON, SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 import { playTransition } from "@lib/fabric/animation";
 import { modelTransitionToPreview, playSlideAnimations } from "@lib/fabric/slidePlayback";
-import { PresenterSocket } from "@lib/realtime/presenter";
+import { PresenterSocket, type ViewerStatus } from "@lib/realtime/presenter";
 import type { Slide } from "@shared/types/slide";
 
 export default function PresentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,15 +14,19 @@ export default function PresentPage({ params }: { params: Promise<{ id: string }
   const [slides, setSlides] = useState<Slide[]>([]);
   const [cur, setCur] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  // "rejected" means another presenter already holds this session (server
+  // enforces a single presenter); we surface a notice instead of reconnecting.
+  const [status, setStatus] = useState<ViewerStatus>("connecting");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const presenterRef = useRef<PresenterSocket | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
+    let mounted = true;
     slidesApi.list(accessToken, id).then(r => setSlides(r.items as Slide[]));
-    presenterRef.current = new PresenterSocket(id, accessToken);
-    return () => { presenterRef.current?.destroy(); };
+    presenterRef.current = new PresenterSocket(id, accessToken, (s) => { if (mounted) setStatus(s); });
+    return () => { mounted = false; presenterRef.current?.destroy(); };
   }, [id, accessToken]);
 
   useEffect(() => {
@@ -79,6 +83,11 @@ export default function PresentPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="flex h-screen bg-gray-900 text-white">
+      {status === "rejected" && (
+        <div className="absolute inset-x-0 top-0 z-10 bg-red-600/90 px-4 py-2 text-center text-sm">
+          既に別の発表者がこのセッションを操作中です。発表者は1人までです。
+        </div>
+      )}
       <div className="flex flex-1 flex-col items-center justify-center p-8">
         <div ref={stageRef} className="shadow-2xl rounded-lg overflow-hidden"><canvas ref={canvasRef} /></div>
         <div className="mt-4 flex items-center gap-6">

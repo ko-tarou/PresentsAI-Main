@@ -10,6 +10,9 @@ const STATUS_LABEL: Record<ViewerStatus, string> = {
   connecting: "接続中…",
   connected: "発表者に同期中",
   disconnected: "切断 — 再接続中（手動操作可）",
+  // Viewers are never rejected (the public audience path accepts anonymous
+  // connections); this branch exists only to satisfy the exhaustive Record.
+  rejected: "接続を拒否されました",
 };
 
 export default function ViewPage({ params }: { params: Promise<{ id: string }> }) {
