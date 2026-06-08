@@ -125,6 +125,56 @@ describe("ObjectBinding: Fabric -> Yjs", () => {
   });
 });
 
+describe("ObjectBinding: z-order (moveObject)", () => {
+  let doc: Y.Doc;
+  let objects: Y.Array<YObjectMap>;
+  let binding: ObjectBinding;
+
+  beforeEach(() => {
+    doc = new Y.Doc();
+    const slide = seedSlide(doc, [
+      { id: "a", type: "rect" },
+      { id: "b", type: "circle" },
+      { id: "c", type: "textbox" },
+    ]);
+    objects = objectsArray(slide);
+    binding = new ObjectBinding(doc, objects, new FakeCanvas());
+  });
+
+  const ids = () => objects.map((m) => m.get("id"));
+
+  it("moves an object to a later z-index, preserving its props", () => {
+    doc.transact(() => objects.get(0).set("left", 7));
+    binding.moveObject("a", 2);
+    expect(ids()).toEqual(["b", "c", "a"]);
+    // The cloned Y.Map keeps the moved object's properties.
+    expect(objects.get(2).get("left")).toBe(7);
+  });
+
+  it("moves an object to an earlier z-index", () => {
+    binding.moveObject("c", 0);
+    expect(ids()).toEqual(["c", "a", "b"]);
+  });
+
+  it("clamps an out-of-range target index", () => {
+    binding.moveObject("a", 99);
+    expect(ids()).toEqual(["b", "c", "a"]);
+  });
+
+  it("is a no-op for an unknown id or an unchanged position", () => {
+    binding.moveObject("zzz", 0);
+    binding.moveObject("a", 0);
+    expect(ids()).toEqual(["a", "b", "c"]);
+  });
+
+  it("tags the reorder with LOCAL_ORIGIN so it does not bounce back", () => {
+    const origins: unknown[] = [];
+    doc.on("afterTransaction", (txn) => origins.push(txn.origin));
+    binding.moveObject("a", 2);
+    expect(origins).toContain(LOCAL_ORIGIN);
+  });
+});
+
 describe("ObjectBinding: Yjs -> Fabric", () => {
   it("reconciles a remote property patch onto the canvas", () => {
     const doc = new Y.Doc();
