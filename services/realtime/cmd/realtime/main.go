@@ -17,6 +17,11 @@ type Session struct {
 	mu        sync.RWMutex
 	presenter *websocket.Conn
 	viewers   map[*websocket.Conn]bool
+	// lastState holds the most recent slide-change frame so a viewer that joins
+	// (or reconnects) mid-presentation is synced to the current slide
+	// immediately, instead of waiting for the next slide-change. nil until the
+	// presenter has sent at least one frame.
+	lastState []byte
 }
 
 var sessions = make(map[string]*Session)
@@ -58,11 +63,14 @@ func handlePresenter(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
-		sess.mu.RLock()
+		sess.mu.Lock()
+		// Retain the latest frame so late-joining viewers can be snapshotted.
+		// Copy because gorilla reuses the read buffer across ReadMessage calls.
+		sess.lastState = append(sess.lastState[:0:0], msg...)
 		for v := range sess.viewers {
 			v.WriteMessage(websocket.TextMessage, msg)
 		}
-		sess.mu.RUnlock()
+		sess.mu.Unlock()
 	}
 }
 
@@ -79,7 +87,13 @@ func handleViewer(w http.ResponseWriter, r *http.Request) {
 	sess := getSession(sessionID)
 	sess.mu.Lock()
 	sess.viewers[conn] = true
+	// Snapshot the current slide to the new viewer so it lands on the slide the
+	// presenter is on, rather than slide 0, until the next slide-change.
+	snapshot := sess.lastState
 	sess.mu.Unlock()
+	if snapshot != nil {
+		conn.WriteMessage(websocket.TextMessage, snapshot)
+	}
 	defer func() {
 		sess.mu.Lock()
 		delete(sess.viewers, conn)
