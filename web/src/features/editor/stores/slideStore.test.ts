@@ -57,4 +57,33 @@ describe("useSlideStore", () => {
     useSlideStore.getState().setCurrentIndex(2);
     expect(useSlideStore.getState().currentIndex).toBe(2);
   });
+
+  it("setSlides preserves transition/animations/layoutRef fields", () => {
+    const s = slide("a", {
+      transition: { type: "fade", durationMs: 300 },
+      animations: [{ targetId: "o1", type: "fadeIn", order: 0 }],
+      layoutRef: "title",
+    });
+    useSlideStore.getState().setSlides([s]);
+    const got = useSlideStore.getState().slides[0];
+    expect(got.transition).toEqual({ type: "fade", durationMs: 300 });
+    expect(got.animations).toEqual([{ targetId: "o1", type: "fadeIn", order: 0 }]);
+    expect(got.layoutRef).toBe("title");
+  });
+
+  it("updateSlideMeta updates slide-level fields on the matching slide only", () => {
+    useSlideStore.getState().setSlides([slide("a"), slide("b")]);
+    useSlideStore.getState().updateSlideMeta("a", {
+      transition: { type: "slide", durationMs: 500 },
+      animations: [{ targetId: "x", type: "zoomIn", order: 1, delayMs: 100 }],
+      layoutRef: "blank",
+    });
+    const [a, b] = useSlideStore.getState().slides;
+    expect(a.transition).toEqual({ type: "slide", durationMs: 500 });
+    expect(a.animations).toEqual([{ targetId: "x", type: "zoomIn", order: 1, delayMs: 100 }]);
+    expect(a.layoutRef).toBe("blank");
+    // content untouched, sibling untouched
+    expect(a.content.version).toBe("6.0.0");
+    expect(b.transition).toBeUndefined();
+  });
 });
