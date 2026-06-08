@@ -142,6 +142,28 @@ export class ObjectBinding {
     }, LOCAL_ORIGIN);
   }
 
+  /**
+   * Reorder an object within the slide (z-order). The Y.Array order *is* the
+   * z-order — {@link reconcileToCanvas} re-adds objects in array index order —
+   * so reordering must mutate the array, not just the Fabric stack. We detach +
+   * clone the Y.Map (a Y type cannot live in two places) and re-insert it at
+   * `toIndex`, mirroring {@link SlideStructureBinding.moveSlide}. The write runs
+   * under {@link LOCAL_ORIGIN} so it propagates to collaborators without bouncing
+   * back into our own canvas; the caller restacks Fabric locally to match.
+   */
+  moveObject(id: string, toIndex: number): void {
+    if (this.applyingRemote) return;
+    this.doc.transact(() => {
+      const from = this.indexOfId(id);
+      if (from === -1) return;
+      const dest = Math.max(0, Math.min(toIndex, this.objects.length - 1));
+      if (from === dest) return;
+      const clone = objectToYMap(this.objects.get(from).toJSON());
+      this.objects.delete(from, 1);
+      this.objects.insert(dest, [clone]);
+    }, LOCAL_ORIGIN);
+  }
+
   // ---- Yjs -> Fabric ------------------------------------------------------
 
   /**
