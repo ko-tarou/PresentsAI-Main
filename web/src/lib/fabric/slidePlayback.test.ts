@@ -4,7 +4,8 @@ import type { ElementAnimation } from "@shared/types/slide";
 
 // Spy on the entrance primitive so we can assert orchestration without a real
 // fabric canvas (jsdom can't run fabric's rendering pipeline).
-const animateEntranceSpy = vi.fn(() => Promise.resolve());
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const animateEntranceSpy = vi.fn((..._args: any[]) => Promise.resolve());
 vi.mock("./animation", () => ({
   animateEntrance: (...args: unknown[]) => animateEntranceSpy(...args),
 }));
