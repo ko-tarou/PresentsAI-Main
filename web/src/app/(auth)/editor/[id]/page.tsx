@@ -42,7 +42,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [title, setTitle] = useState("Untitled");
 
   // Open the collaboration room and bind the active slide's canvas to it.
-  const { provider, doc } = useCollaboration(id ?? null);
+  const { provider, doc } = useCollaboration(id ?? null, accessToken);
   useObjectBinding(doc, canvas, activeSlideId);
   // Live presence: publish/read other editors' slide + selection (ephemeral).
   const { peers } = usePresence(provider, canvas, activeSlideId);

@@ -11,13 +11,13 @@ import { CollabProvider } from "@lib/collab/provider";
  * @returns the live {@link CollabProvider} and its shared {@link Y.Doc} (both
  *          null before connect), kept in state so consumers re-render on connect.
  */
-export function useCollaboration(presentationId: string | null) {
+export function useCollaboration(presentationId: string | null, token: string | null = null) {
   const [provider, setProvider] = useState<CollabProvider | null>(null);
   const [doc, setDoc] = useState<Y.Doc | null>(null);
 
   useEffect(() => {
     if (!presentationId) return;
-    const p = new CollabProvider(presentationId);
+    const p = new CollabProvider(presentationId, new Y.Doc(), token);
     p.connect();
     setProvider(p);
     setDoc(p.doc);
@@ -26,7 +26,7 @@ export function useCollaboration(presentationId: string | null) {
       setProvider(null);
       setDoc(null);
     };
-  }, [presentationId]);
+  }, [presentationId, token]);
 
   return { provider, doc };
 }

@@ -21,6 +21,19 @@ function realtimeBase(): string {
 }
 
 /**
+ * Append the access token as a `?token=` query param when present. WebSocket
+ * handshakes from the browser cannot carry an Authorization header, so the
+ * realtime/collab services read the token from the query string (matching the
+ * API's JWT verification). A null/empty token leaves the URL untouched — the
+ * viewer (public audience) path connects anonymously.
+ */
+export function withToken(url: string, token?: string | null): string {
+  if (!token) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}token=${encodeURIComponent(token)}`;
+}
+
+/**
  * Parse a raw realtime message and return the slide index the viewer should
  * follow, or null if the message is not a usable slide-change. Pure so the
  * follow logic can be unit-tested without a live socket.
@@ -115,8 +128,8 @@ class ReconnectingSocket {
 export class PresenterSocket extends ReconnectingSocket {
   private lastIndex = 0;
 
-  constructor(sessionId: string, rand: () => number = Math.random) {
-    super(`${realtimeBase()}/presenter?session=${sessionId}`, rand);
+  constructor(sessionId: string, token?: string | null, rand: () => number = Math.random) {
+    super(withToken(`${realtimeBase()}/presenter?session=${sessionId}`, token), rand);
     this.start();
   }
 
@@ -145,8 +158,13 @@ export class PresenterSocket extends ReconnectingSocket {
 export class ViewerSocket extends ReconnectingSocket {
   private readonly handlers: ViewerSocketHandlers;
 
-  constructor(sessionId: string, handlers: ViewerSocketHandlers | ((index: number) => void), rand: () => number = Math.random) {
-    super(`${realtimeBase()}/viewer?session=${sessionId}`, rand);
+  constructor(
+    sessionId: string,
+    handlers: ViewerSocketHandlers | ((index: number) => void),
+    rand: () => number = Math.random,
+    token?: string | null,
+  ) {
+    super(withToken(`${realtimeBase()}/viewer?session=${sessionId}`, token), rand);
     // Backwards-compatible: a bare callback is treated as onSlideChange.
     this.handlers = typeof handlers === "function" ? { onSlideChange: handlers } : handlers;
     this.start();
