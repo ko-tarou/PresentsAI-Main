@@ -39,7 +39,7 @@ const (
 // TestUpdateStoredAndBroadcast: an Update frame is appended to the room log and
 // relayed to the *other* client (not echoed back to the sender).
 func TestUpdateStoredAndBroadcast(t *testing.T) {
-	h := New()
+	h := New(nil)
 	room := h.Room("deck-1")
 	a := &fakeClient{id: "a"}
 	b := &fakeClient{id: "b"}
@@ -67,7 +67,7 @@ func TestUpdateStoredAndBroadcast(t *testing.T) {
 // TestSyncStep1ReplaysSnapshot: a newcomer sending SyncStep1 receives every
 // stored update followed by the server's own SyncStep1 (empty state vector).
 func TestSyncStep1ReplaysSnapshot(t *testing.T) {
-	h := New()
+	h := New(nil)
 	room := h.Room("deck-1")
 
 	// Seed the room with two stored updates via an existing client.
@@ -101,7 +101,7 @@ func TestSyncStep1ReplaysSnapshot(t *testing.T) {
 // TestSyncStep2Stored: a SyncStep2 (full-state reply) is stored and broadcast
 // just like an Update.
 func TestSyncStep2Stored(t *testing.T) {
-	h := New()
+	h := New(nil)
 	room := h.Room("deck-1")
 	a := &fakeClient{id: "a"}
 	b := &fakeClient{id: "b"}
@@ -126,7 +126,7 @@ func TestSyncStep2Stored(t *testing.T) {
 
 // TestAwarenessRelayedNotStored: awareness is relayed verbatim and not stored.
 func TestAwarenessRelayedNotStored(t *testing.T) {
-	h := New()
+	h := New(nil)
 	room := h.Room("deck-1")
 	a := &fakeClient{id: "a"}
 	b := &fakeClient{id: "b"}
@@ -149,7 +149,7 @@ func TestAwarenessRelayedNotStored(t *testing.T) {
 
 // TestRoomSeparation: updates in one room never leak into another.
 func TestRoomSeparation(t *testing.T) {
-	h := New()
+	h := New(nil)
 	r1 := h.Room("deck-1")
 	r2 := h.Room("deck-2")
 	a := &fakeClient{id: "a"} // in deck-1
@@ -175,7 +175,7 @@ func TestRoomSeparation(t *testing.T) {
 
 // TestLeaveStopsBroadcast: a client that left no longer receives broadcasts.
 func TestLeaveStopsBroadcast(t *testing.T) {
-	h := New()
+	h := New(nil)
 	room := h.Room("deck-1")
 	a := &fakeClient{id: "a"}
 	b := &fakeClient{id: "b"}
@@ -191,7 +191,7 @@ func TestLeaveStopsBroadcast(t *testing.T) {
 
 // TestMalformedIgnored: garbage frames are ignored without panicking or storing.
 func TestMalformedIgnored(t *testing.T) {
-	h := New()
+	h := New(nil)
 	room := h.Room("deck-1")
 	a := &fakeClient{id: "a"}
 	room.Join(a)
