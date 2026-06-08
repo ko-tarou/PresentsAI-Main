@@ -1,13 +1,13 @@
 "use client";
 import { useRef, useState } from "react";
-import { Monitor, Grid3x3, LayoutGrid, Ruler, Magnet, Maximize, FileText } from "lucide-react";
+import { Monitor, Grid3x3, LayoutGrid, Ruler, Magnet, Maximize, FileText, Layers } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { toggleGrid, enableSnap } from "@lib/fabric/grid";
 import { fitToContainer } from "@lib/fabric/canvas";
 import { RibbonGroup, RibbonDivider, RibbonBigButton } from "./ribbonPrimitives";
 
 export function ViewTab() {
-  const { canvas, setZoom, notesVisible, toggleNotes, viewMode, setViewMode, showRuler, toggleRuler } = useEditorStore();
+  const { canvas, setZoom, notesVisible, toggleNotes, viewMode, setViewMode, showRuler, toggleRuler, showLayers, toggleLayers } = useEditorStore();
   const [grid, setGrid] = useState(false);
   const [snap, setSnap] = useState(false);
   const snapEnabled = useRef(false);
@@ -61,6 +61,7 @@ export function ViewTab() {
         <RibbonBigButton icon={<Grid3x3 />} label="グリッド線" active={grid} onClick={onToggleGrid} />
         <RibbonBigButton icon={<Magnet />} label="スナップ" active={snap} onClick={onToggleSnap} />
         <RibbonBigButton icon={<Ruler />} label="ルーラー" active={showRuler} onClick={toggleRuler} title="ルーラー" />
+        <RibbonBigButton icon={<Layers />} label="レイヤー" active={showLayers} onClick={toggleLayers} title="レイヤー（オブジェクト一覧）" />
         <RibbonBigButton icon={<FileText />} label="ノート" active={notesVisible} onClick={toggleNotes} title="ノート" />
       </RibbonGroup>
       <RibbonDivider />
