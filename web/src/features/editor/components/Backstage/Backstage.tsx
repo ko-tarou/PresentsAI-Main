@@ -6,11 +6,12 @@ import {
   X, ArrowLeft, FileText, FileImage, FileCode, Presentation,
 } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
+import { useSlideStore } from "../../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
 import { toJSON } from "@lib/fabric/canvas";
 import { exportToPDF } from "@lib/export/pdf";
-import { exportToPNG, exportToSVG } from "@lib/export/png";
+import { exportAllSlidesToPNG, exportToSVG } from "@lib/export/png";
 import { exportToPPTX } from "@lib/export/pptx";
 import type { SlideContent } from "@shared/types/slide";
 
@@ -34,6 +35,7 @@ export function Backstage({ open, onClose }: BackstageProps) {
   const router = useRouter();
   const [section, setSection] = useState<Section>("new");
   const { canvas, activeSlideId, presentationId } = useEditorStore();
+  const slides = useSlideStore((s) => s.slides);
   const setDirty = useEditorStore((s) => s.setDirty);
   const { accessToken } = useAuthStore();
 
@@ -149,10 +151,10 @@ export function Backstage({ open, onClose }: BackstageProps) {
           <Panel title="エクスポート">
             <div className="grid max-w-2xl grid-cols-2 gap-4">
               {[
-                { l: "PDF", desc: "PDF として保存", Icon: FileText, fn: () => exportToPDF(canvas!) },
-                { l: "PNG", desc: "画像として保存", Icon: FileImage, fn: () => exportToPNG(canvas!) },
+                { l: "PDF", desc: "PDF として保存", Icon: FileText, fn: () => exportToPDF(slides) },
+                { l: "PNG", desc: "画像として保存", Icon: FileImage, fn: () => exportAllSlidesToPNG(slides) },
                 { l: "SVG", desc: "ベクター形式で保存", Icon: FileCode, fn: () => exportToSVG(canvas!) },
-                { l: "PowerPoint", desc: "PPTX として保存", Icon: Presentation, fn: () => exportToPPTX(canvas!) },
+                { l: "PowerPoint", desc: "PPTX として保存", Icon: Presentation, fn: () => exportToPPTX(slides) },
               ].map(({ l, desc, Icon, fn }) => (
                 <button
                   key={l}
@@ -174,7 +176,7 @@ export function Backstage({ open, onClose }: BackstageProps) {
         {section === "print" && (
           <Panel title="印刷">
             <button
-              onClick={() => { if (canvas) exportToPDF(canvas); }}
+              onClick={() => { if (canvas) exportToPDF(slides); }}
               disabled={!canvas}
               className="btn btn-primary gap-2 disabled:opacity-50"
             >
