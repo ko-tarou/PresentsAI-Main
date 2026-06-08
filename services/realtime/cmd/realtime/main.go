@@ -11,7 +11,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+// auth holds the connection authorization policy (JWT verification + origin
+// allowlist), resolved from the environment in main. upgrader delegates its
+// CheckOrigin to it so the allowlist is enforced before the WS handshake.
+var auth authConfig
+var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return auth.checkOrigin(r) }}
 
 type Session struct {
 	mu        sync.RWMutex
@@ -42,6 +46,12 @@ func handlePresenter(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.URL.Query().Get("session")
 	if sessionID == "" {
 		http.Error(w, "session required", 400)
+		return
+	}
+	// Presenter is a privileged, authenticated role: reject before the WS
+	// handshake when the token is missing or invalid (HTTP 401, like the API).
+	if _, res := auth.verifyToken(r); res != authOK {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 		return
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -80,6 +90,13 @@ func handleViewer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "session required", 400)
 		return
 	}
+	// Viewer is the public audience path: a token is optional so anonymous
+	// audiences can follow along. But if one is supplied it must be valid —
+	// a forged/expired token is rejected rather than silently downgraded.
+	if _, res := auth.verifyToken(r); res == authInvalid {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
@@ -109,6 +126,10 @@ func handleViewer(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	godotenv.Load()
+	auth = loadAuthConfig()
+	if auth.jwtSecret == "" {
+		log.Printf("realtime: JWT_SECRET unset, WS token verification DISABLED (dev mode)")
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
