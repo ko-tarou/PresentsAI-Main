@@ -8,6 +8,8 @@ import { useEditorStore } from "@features/editor/stores/editorStore";
 import { useSlideStore } from "@features/editor/stores/slideStore";
 import { useCollaboration } from "@features/editor/hooks/useCollaboration";
 import { useObjectBinding } from "@features/editor/hooks/useObjectBinding";
+import { usePresence } from "@features/editor/hooks/usePresence";
+import { PresenceBar } from "@features/editor/components/PresenceBar";
 import { useSlideStructure } from "@features/editor/hooks/useSlideStructure";
 import { SlideStructureProvider } from "@features/editor/hooks/slideStructureContext";
 import { getSlides, initializeDoc } from "@lib/collab/schema";
@@ -40,8 +42,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [title, setTitle] = useState("Untitled");
 
   // Open the collaboration room and bind the active slide's canvas to it.
-  const { doc } = useCollaboration(id ?? null);
+  const { provider, doc } = useCollaboration(id ?? null);
   useObjectBinding(doc, canvas, activeSlideId);
+  // Live presence: publish/read other editors' slide + selection (ephemeral).
+  const { peers } = usePresence(provider, canvas, activeSlideId);
   // Collaborative slide-list structure (add / remove / move) + JSONB projection.
   const structure = useSlideStructure(doc, id ?? null, accessToken);
 
@@ -92,6 +96,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         <QuickAccess />
 
         <div className="flex-1" />
+
+        {/* Live collaborators (presence) */}
+        <PresenceBar peers={peers} activeSlideId={activeSlideId} />
 
         {/* Export */}
         <ExportButton />

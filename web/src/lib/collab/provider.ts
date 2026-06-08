@@ -1,15 +1,17 @@
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
+import type { Awareness } from "y-protocols/awareness";
 import { getSlides, type YSlideMap } from "./schema";
 
 /**
  * Collaboration provider backed by `y-websocket`.
  *
  * One provider == one presentation "room". The Yjs doc is the source of truth
- * (ADR-0011); this class only owns connection lifecycle (connect / disconnect /
- * auto-reconnect, handled by y-websocket) and exposes the shared doc + slide
- * array. Fabric two-way binding and awareness are intentionally out of scope
- * for this PR.
+ * (ADR-0011); this class owns connection lifecycle (connect / disconnect /
+ * auto-reconnect, handled by y-websocket) and exposes the shared doc, slide
+ * array, and the ephemeral awareness channel for live presence. y-websocket
+ * encodes awareness updates onto the same socket the collab server relays
+ * verbatim, so presence rides the existing transport with no server changes.
  */
 export class CollabProvider {
   readonly doc: Y.Doc;
@@ -47,6 +49,14 @@ export class CollabProvider {
   /** The shared, ordered slide list (Y.Array<Y.Map>). */
   get slides(): Y.Array<YSlideMap> {
     return getSlides(this.doc);
+  }
+
+  /**
+   * The ephemeral awareness channel (live presence), or null before connect.
+   * y-websocket owns the instance; callers wrap it with {@link PresenceManager}.
+   */
+  get awareness(): Awareness | null {
+    return this.provider?.awareness ?? null;
   }
 
   /** Closes the socket and tears down the provider, keeping the doc intact. */
