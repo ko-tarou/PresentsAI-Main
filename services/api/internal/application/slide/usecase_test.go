@@ -196,6 +196,90 @@ func TestUpdateContent(t *testing.T) {
 	}
 }
 
+func TestUpdateMeta(t *testing.T) {
+	ctx := context.Background()
+	uc, srepo := newUC()
+	s := srepo.seed(ownedPres, 0)
+
+	layout := "title"
+	updated, err := uc.UpdateMeta(ctx, string(s.ID), ownerID, SlideMeta{
+		Transition: &domainSlide.Transition{Type: "fade", DurationMs: 300},
+		Animations: []domainSlide.ElementAnimation{{TargetID: "o1", Type: "fadeIn", Order: 0}},
+		LayoutRef:  &layout,
+	})
+	if err != nil {
+		t.Fatalf("UpdateMeta returned error: %v", err)
+	}
+	if updated.Transition == nil || updated.Transition.Type != "fade" || updated.Transition.DurationMs != 300 {
+		t.Fatalf("transition not applied: %+v", updated.Transition)
+	}
+	if len(updated.Animations) != 1 || updated.Animations[0].Type != "fadeIn" {
+		t.Fatalf("animations not applied: %+v", updated.Animations)
+	}
+	if updated.LayoutRef != "title" {
+		t.Fatalf("layoutRef = %q, want title", updated.LayoutRef)
+	}
+	// Persisted to the repo.
+	stored := srepo.byID[s.ID]
+	if stored.Transition == nil || stored.Transition.Type != "fade" {
+		t.Fatal("transition not persisted")
+	}
+}
+
+func TestUpdateMetaPartialPreservesOtherFields(t *testing.T) {
+	ctx := context.Background()
+	uc, srepo := newUC()
+	s := srepo.seed(ownedPres, 0)
+	s.Transition = &domainSlide.Transition{Type: "zoom", DurationMs: 500}
+	s.LayoutRef = "blank"
+
+	// Update only animations; transition and layoutRef must be preserved.
+	if _, err := uc.UpdateMeta(ctx, string(s.ID), ownerID, SlideMeta{
+		Animations: []domainSlide.ElementAnimation{{TargetID: "x", Type: "zoomIn", Order: 1}},
+	}); err != nil {
+		t.Fatalf("UpdateMeta returned error: %v", err)
+	}
+	stored := srepo.byID[s.ID]
+	if stored.Transition == nil || stored.Transition.Type != "zoom" {
+		t.Fatalf("transition not preserved: %+v", stored.Transition)
+	}
+	if stored.LayoutRef != "blank" {
+		t.Fatalf("layoutRef not preserved: %q", stored.LayoutRef)
+	}
+	if len(stored.Animations) != 1 {
+		t.Fatalf("animations not applied: %+v", stored.Animations)
+	}
+}
+
+func TestUpdateMetaNoneClearsTransition(t *testing.T) {
+	ctx := context.Background()
+	uc, srepo := newUC()
+	s := srepo.seed(ownedPres, 0)
+	s.Transition = &domainSlide.Transition{Type: "fade", DurationMs: 300}
+
+	if _, err := uc.UpdateMeta(ctx, string(s.ID), ownerID, SlideMeta{
+		Transition: &domainSlide.Transition{Type: "none"},
+	}); err != nil {
+		t.Fatalf("UpdateMeta returned error: %v", err)
+	}
+	if srepo.byID[s.ID].Transition != nil {
+		t.Fatalf("transition not cleared: %+v", srepo.byID[s.ID].Transition)
+	}
+}
+
+func TestUpdateMetaForbiddenOnForeignSlide(t *testing.T) {
+	ctx := context.Background()
+	uc, srepo := newUC()
+	s := srepo.seed(otherPres, 0)
+
+	_, err := uc.UpdateMeta(ctx, string(s.ID), ownerID, SlideMeta{
+		Transition: &domainSlide.Transition{Type: "fade"},
+	})
+	if !errors.Is(err, sharedErr.ErrForbidden) {
+		t.Fatalf("err = %v, want ErrForbidden", err)
+	}
+}
+
 func TestDelete(t *testing.T) {
 	ctx := context.Background()
 	uc, srepo := newUC()
