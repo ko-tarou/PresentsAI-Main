@@ -15,6 +15,7 @@ interface EditorState {
   viewMode: ViewMode;
   showRuler: boolean;
   showLayers: boolean;
+  showComments: boolean;
 
   setCanvas: (canvas: Canvas | null) => void;
   setActiveTool: (tool: EditorTool) => void;
@@ -29,6 +30,8 @@ interface EditorState {
   setShowRuler: (show: boolean) => void;
   toggleLayers: () => void;
   setShowLayers: (show: boolean) => void;
+  toggleComments: () => void;
+  setShowComments: (show: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -42,6 +45,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   viewMode: "normal",
   showRuler: false,
   showLayers: false,
+  showComments: false,
 
   setCanvas: (canvas) => set({ canvas }),
   setActiveTool: (activeTool) => set({ activeTool }),
@@ -56,4 +60,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setShowRuler: (showRuler) => set({ showRuler }),
   toggleLayers: () => set((s) => ({ showLayers: !s.showLayers })),
   setShowLayers: (showLayers) => set({ showLayers }),
+  toggleComments: () => set((s) => ({ showComments: !s.showComments })),
+  setShowComments: (showComments) => set({ showComments }),
 }));
