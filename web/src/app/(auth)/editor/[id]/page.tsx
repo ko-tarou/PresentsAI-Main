@@ -8,6 +8,8 @@ import { useEditorStore } from "@features/editor/stores/editorStore";
 import { useSlideStore } from "@features/editor/stores/slideStore";
 import { useCollaboration } from "@features/editor/hooks/useCollaboration";
 import { useObjectBinding } from "@features/editor/hooks/useObjectBinding";
+import { useSlideStructure } from "@features/editor/hooks/useSlideStructure";
+import { SlideStructureProvider } from "@features/editor/hooks/slideStructureContext";
 import { getSlides, initializeDoc } from "@lib/collab/schema";
 import { slidesApi } from "@shared/api/slides";
 import { presentationsApi } from "@shared/api/presentations";
@@ -40,6 +42,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   // Open the collaboration room and bind the active slide's canvas to it.
   const { doc } = useCollaboration(id ?? null);
   useObjectBinding(doc, canvas, activeSlideId);
+  // Collaborative slide-list structure (add / remove / move) + JSONB projection.
+  const structure = useSlideStructure(doc, id ?? null, accessToken);
 
   useEffect(() => {
     if (!accessToken || !id) return;
@@ -59,6 +63,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }, [id, accessToken, doc, setPresentationId, setSlides, setActiveSlide]);
 
   return (
+    <SlideStructureProvider value={structure}>
     <div className="flex h-screen flex-col overflow-hidden bg-surface-subtle">
       {/* Header */}
       <header className="flex h-12 items-center border-b border-border bg-surface px-4 shrink-0 gap-3">
@@ -149,5 +154,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       {/* Bottom status bar */}
       <StatusBar />
     </div>
+    </SlideStructureProvider>
   );
 }
