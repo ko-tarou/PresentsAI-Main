@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Plus, CopyPlus, Trash2 } from "lucide-react";
 import { useSlideStore } from "../../stores/slideStore";
 import { useEditorStore } from "../../stores/editorStore";
+import { useSlideStructureOps } from "../../hooks/slideStructureContext";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
@@ -18,6 +19,7 @@ export function SlidePanel() {
   const { slides, currentIndex, setCurrentIndex, addSlide, updateSlide, deleteSlide } = useSlideStore();
   const { setActiveSlide, presentationId } = useEditorStore();
   const { accessToken } = useAuthStore();
+  const structure = useSlideStructureOps();
   const [adding, setAdding] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
 
@@ -32,6 +34,8 @@ export function SlidePanel() {
     try {
       const s = await slidesApi.create(accessToken, presentationId);
       addSlide(s as Slide);
+      // Mirror the new slide into the shared doc so peers see it too.
+      structure.addSlide((s as Slide).id);
       handleSelect(slides.length);
     } finally { setAdding(false); }
   }
@@ -44,6 +48,9 @@ export function SlidePanel() {
       await slidesApi.updateContent(accessToken, presentationId, created.id, slide.content);
       addSlide({ ...created, content: slide.content });
       updateSlide(created.id, slide.content as unknown as Record<string, unknown>);
+      // Mirror the duplicated slide into the shared doc; its objects sync via
+      // the per-slide ObjectBinding / projection autosave.
+      structure.addSlide(created.id);
       handleSelect(slides.length);
     } finally { setAdding(false); }
   }
@@ -53,6 +60,8 @@ export function SlidePanel() {
     if (slides.length <= 1 || !accessToken || !presentationId) return;
     await slidesApi.delete(accessToken, presentationId, id);
     deleteSlide(id);
+    // Mirror the removal into the shared doc so peers drop it too.
+    structure.removeSlide(id);
   }
 
   function openMenu(e: React.MouseEvent, slideId: string) {

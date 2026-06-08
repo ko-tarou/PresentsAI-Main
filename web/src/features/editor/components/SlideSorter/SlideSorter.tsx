@@ -1,17 +1,41 @@
 "use client";
+import { useRef, useState } from "react";
 import { Monitor } from "lucide-react";
 import { useSlideStore } from "../../stores/slideStore";
 import { useEditorStore } from "../../stores/editorStore";
+import { useSlideStructureOps } from "../../hooks/slideStructureContext";
+import { useAuthStore } from "@features/dashboard/stores/authStore";
+import { slidesApi } from "@shared/api/slides";
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 
 export function SlideSorter() {
-  const { slides, currentIndex, setCurrentIndex } = useSlideStore();
-  const { setActiveSlide, setViewMode } = useEditorStore();
+  const { slides, currentIndex, setCurrentIndex, setSlides } = useSlideStore();
+  const { setActiveSlide, setViewMode, presentationId } = useEditorStore();
+  const { accessToken } = useAuthStore();
+  const structure = useSlideStructureOps();
+  const dragFrom = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
 
   function openSlide(i: number) {
     setCurrentIndex(i);
     setActiveSlide(slides[i].id);
     setViewMode("normal");
+  }
+
+  // Reorder locally, mirror into the shared doc, and persist positions.
+  function reorder(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= slides.length) return;
+    const id = slides[from].id;
+    const next = [...slides];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setSlides(next.map((s, i) => ({ ...s, position: i })));
+    structure.moveSlide(id, to);
+    if (accessToken && presentationId) {
+      const positions: Record<string, number> = {};
+      next.forEach((s, i) => { positions[s.id] = i; });
+      void slidesApi.reorder(accessToken, presentationId, positions).catch(() => {});
+    }
   }
 
   return (
@@ -44,11 +68,24 @@ export function SlideSorter() {
                 key={slide.id}
                 onClick={() => openSlide(i)}
                 onDoubleClick={() => openSlide(i)}
+                draggable
+                onDragStart={() => { dragFrom.current = i; }}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(i); }}
+                onDragLeave={() => setDragOver((d) => (d === i ? null : d))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (dragFrom.current !== null) reorder(dragFrom.current, i);
+                  dragFrom.current = null;
+                  setDragOver(null);
+                }}
+                onDragEnd={() => { dragFrom.current = null; setDragOver(null); }}
                 className="group flex flex-col gap-1.5 text-left"
               >
                 <div
                   className={`relative overflow-hidden rounded-lg border-2 bg-white shadow-sm transition-all aspect-video group-hover:shadow-md ${
-                    i === currentIndex
+                    dragOver === i
+                      ? "border-primary-500 ring-2 ring-primary-300"
+                      : i === currentIndex
                       ? "border-primary-500 ring-2 ring-primary-200"
                       : "border-border group-hover:border-primary-300"
                   }`}
