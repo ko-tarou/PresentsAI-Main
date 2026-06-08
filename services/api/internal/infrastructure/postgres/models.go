@@ -22,6 +22,30 @@ func (j *JSONB) Scan(value interface{}) error {
 	return json.Unmarshal(b, j)
 }
 
+// JSONBRaw is a nullable jsonb column holding arbitrary JSON (objects or
+// arrays). It is used for additive slide fields (transition, animations).
+type JSONBRaw json.RawMessage
+
+func (j JSONBRaw) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return nil, nil
+	}
+	return []byte(j), nil
+}
+
+func (j *JSONBRaw) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("JSONBRaw: expected []byte, got %T", value)
+	}
+	*j = append((*j)[:0], b...)
+	return nil
+}
+
 type UserModel struct {
 	ID           string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Email        string    `gorm:"uniqueIndex;not null"`
@@ -52,6 +76,9 @@ type SlideModel struct {
 	ThumbnailURL   string    `gorm:"default:''"`
 	Notes          string    `gorm:"not null;default:''"`
 	Content        JSONB     `gorm:"type:jsonb;not null;default:'{}'"`
+	Transition     JSONBRaw  `gorm:"type:jsonb"`
+	Animations     JSONBRaw  `gorm:"type:jsonb"`
+	LayoutRef      string    `gorm:"not null;default:''"`
 	CreatedAt      time.Time `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
 }

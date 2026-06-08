@@ -12,15 +12,34 @@ type ID string
 // Content is the Fabric.js canvas JSON stored as JSONB in PostgreSQL.
 type Content map[string]interface{}
 
+// Transition is a slide-level transition played when the slide appears.
+// Type "none" (the zero value) means no transition.
+type Transition struct {
+	Type       string `json:"type"`
+	DurationMs int    `json:"durationMs,omitempty"`
+}
+
+// ElementAnimation is an animation applied to a single canvas element.
+type ElementAnimation struct {
+	TargetID   string `json:"targetId"`
+	Type       string `json:"type"`
+	Order      int    `json:"order"`
+	DurationMs int    `json:"durationMs,omitempty"`
+	DelayMs    int    `json:"delayMs,omitempty"`
+}
+
 type Slide struct {
-	ID             ID              `json:"id"`
-	PresentationID presentation.ID `json:"presentationId"`
-	Position       int             `json:"position"`
-	ThumbnailURL   string          `json:"thumbnailUrl"`
-	Notes          string          `json:"notes"`
-	Content        Content         `json:"content"`
-	CreatedAt      time.Time       `json:"createdAt"`
-	UpdatedAt      time.Time       `json:"updatedAt"`
+	ID             ID                 `json:"id"`
+	PresentationID presentation.ID    `json:"presentationId"`
+	Position       int                `json:"position"`
+	ThumbnailURL   string             `json:"thumbnailUrl"`
+	Notes          string             `json:"notes"`
+	Content        Content            `json:"content"`
+	Transition     *Transition        `json:"transition,omitempty"`
+	Animations     []ElementAnimation `json:"animations,omitempty"`
+	LayoutRef      string             `json:"layoutRef,omitempty"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	UpdatedAt      time.Time          `json:"updatedAt"`
 }
 
 func New(presentationID presentation.ID, position int) *Slide {

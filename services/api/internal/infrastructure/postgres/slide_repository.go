@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 
 	"gorm.io/gorm"
 
@@ -24,6 +25,9 @@ func (r *slideRepository) Create(ctx context.Context, s *domainSlide.Slide) erro
 		Position:       s.Position,
 		ThumbnailURL:   s.ThumbnailURL,
 		Content:        JSONB(s.Content),
+		Transition:     marshalRaw(s.Transition),
+		Animations:     marshalRaw(s.Animations),
+		LayoutRef:      s.LayoutRef,
 	}
 	if err := r.db.WithContext(ctx).Create(m).Error; err != nil {
 		return err
@@ -70,6 +74,9 @@ func (r *slideRepository) Update(ctx context.Context, s *domainSlide.Slide) erro
 			"content":       JSONB(s.Content),
 			"thumbnail_url": s.ThumbnailURL,
 			"notes":         s.Notes,
+			"transition":    marshalRaw(s.Transition),
+			"animations":    marshalRaw(s.Animations),
+			"layout_ref":    s.LayoutRef,
 		}).Error
 }
 
@@ -91,14 +98,45 @@ func (r *slideRepository) ReorderSlides(ctx context.Context, presentationID stri
 }
 
 func modelToSlide(m *SlideModel) *domainSlide.Slide {
-	return &domainSlide.Slide{
+	s := &domainSlide.Slide{
 		ID:             domainSlide.ID(m.ID),
 		PresentationID: domainPresentation.ID(m.PresentationID),
 		Position:       m.Position,
 		ThumbnailURL:   m.ThumbnailURL,
 		Notes:          m.Notes,
 		Content:        domainSlide.Content(m.Content),
+		LayoutRef:      m.LayoutRef,
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,
 	}
+	if len(m.Transition) > 0 {
+		var t domainSlide.Transition
+		if json.Unmarshal(m.Transition, &t) == nil {
+			s.Transition = &t
+		}
+	}
+	if len(m.Animations) > 0 {
+		_ = json.Unmarshal(m.Animations, &s.Animations)
+	}
+	return s
+}
+
+// marshalRaw serializes a value to a jsonb column. A nil pointer / empty slice
+// yields a nil column (SQL NULL), keeping the field optional and additive.
+func marshalRaw(v interface{}) JSONBRaw {
+	switch val := v.(type) {
+	case *domainSlide.Transition:
+		if val == nil {
+			return nil
+		}
+	case []domainSlide.ElementAnimation:
+		if len(val) == 0 {
+			return nil
+		}
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	return JSONBRaw(b)
 }
