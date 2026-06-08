@@ -1,5 +1,6 @@
 import { Canvas } from "fabric";
 import { applyControlsToCanvas, applyPowerPointControls } from "./powerpointControls";
+import { ensureObjectIds, CUSTOM_OBJECT_PROPERTIES } from "./objectId";
 
 // Apply PowerPoint-style selection/resize defaults once at module load.
 applyPowerPointControls();
@@ -34,13 +35,21 @@ export function loadFromJSON(canvas: Canvas, json: object): Promise<Canvas> {
     // Re-apply PowerPoint object behaviors to restored objects so saved slides
     // behave like freshly created ones (uniform stroke, no-distort textboxes).
     applyControlsToCanvas(c);
+    // Back-fill stable ids on slides saved before object ids existed, so their
+    // element animations can still resolve their target objects.
+    ensureObjectIds(c);
     c.renderAll();
     return c;
   });
 }
 
 export function toJSON(canvas: Canvas): Record<string, unknown> {
-  return canvas.toJSON() as Record<string, unknown>;
+  // Assign ids to any object lacking one before serializing, then include the
+  // `id` custom property so the stable identity round-trips through save/load.
+  ensureObjectIds(canvas);
+  // toObject threads `propertiesToInclude` down to each object's serializer,
+  // so the custom `id` is emitted. Canvas.toJSON() in fabric v6 takes no args.
+  return canvas.toObject([...CUSTOM_OBJECT_PROPERTIES]) as Record<string, unknown>;
 }
 
 export function fitToContainer(canvas: Canvas, containerWidth: number): number {
