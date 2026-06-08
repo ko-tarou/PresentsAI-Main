@@ -6,6 +6,9 @@ import { ChevronLeft, Presentation, Bot, Mic } from "lucide-react";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { useEditorStore } from "@features/editor/stores/editorStore";
 import { useSlideStore } from "@features/editor/stores/slideStore";
+import { useCollaboration } from "@features/editor/hooks/useCollaboration";
+import { useObjectBinding } from "@features/editor/hooks/useObjectBinding";
+import { getSlides, initializeDoc } from "@lib/collab/schema";
 import { slidesApi } from "@shared/api/slides";
 import { presentationsApi } from "@shared/api/presentations";
 import { ShareButton } from "@features/dashboard/components/ShareButton";
@@ -29,10 +32,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
+
+  // Open the collaboration room and bind the active slide's canvas to it.
+  const { doc } = useCollaboration(id ?? null);
+  useObjectBinding(doc, canvas, activeSlideId);
 
   useEffect(() => {
     if (!accessToken || !id) return;
@@ -41,9 +48,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const slideList = res.items as Slide[];
       setSlides(slideList);
       if (slideList.length > 0) setActiveSlide(slideList[0].id);
+      // Seed the shared doc on first join: if the room is still empty after the
+      // initial sync, this client publishes the loaded slides as the baseline.
+      // Subsequent joiners receive it over the wire and skip seeding.
+      if (doc && getSlides(doc).length === 0 && slideList.length > 0) {
+        initializeDoc(doc, slideList);
+      }
     });
     presentationsApi.get(accessToken, id).then(p => setTitle(p.title));
-  }, [id, accessToken, setPresentationId, setSlides, setActiveSlide]);
+  }, [id, accessToken, doc, setPresentationId, setSlides, setActiveSlide]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-surface-subtle">
