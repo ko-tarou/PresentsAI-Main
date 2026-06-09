@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
+import type { ElementAnimation } from "@shared/types/slide";
 import { toModelTransition, fromModelTransition } from "./TransitionTab";
-import { toModelAnimation, fromModelAnimation } from "./AnimationTab";
+import { toModelAnimation, fromModelAnimation, upsertAnimation } from "./AnimationTab";
 
 describe("transition type mapping", () => {
   it("maps preview transition types to persisted model types", () => {
@@ -53,5 +54,39 @@ describe("animation type mapping", () => {
     expect(fromModelAnimation(toModelAnimation("fly-in-left"))).toBe("fly-in-left");
     expect(fromModelAnimation(toModelAnimation("zoom-in"))).toBe("zoom-in");
     expect(fromModelAnimation(toModelAnimation("bounce"))).toBe("bounce");
+  });
+});
+
+describe("upsertAnimation", () => {
+  const a: ElementAnimation = { targetId: "a", type: "fadeIn", order: 0, durationMs: 600 };
+  const b: ElementAnimation = { targetId: "b", type: "slideIn", order: 1, durationMs: 600 };
+
+  it("seeds a fade-in entrance when the target has no animation yet", () => {
+    const next = upsertAnimation([a], "b", { delayMs: 200 });
+    expect(next).toHaveLength(2);
+    const created = next.find((x) => x.targetId === "b")!;
+    expect(created.type).toBe("fadeIn");
+    expect(created.order).toBe(1); // appended after the one existing animation
+    expect(created.delayMs).toBe(200);
+    expect(created.durationMs).toBe(600);
+  });
+
+  it("merges the patch onto the existing animation, preserving other fields", () => {
+    const next = upsertAnimation([a, b], "a", { delayMs: 300, order: 2 });
+    const updated = next.find((x) => x.targetId === "a")!;
+    expect(updated.type).toBe("fadeIn"); // unchanged
+    expect(updated.delayMs).toBe(300);
+    expect(updated.order).toBe(2);
+  });
+
+  it("leaves other targets untouched", () => {
+    const next = upsertAnimation([a, b], "a", { order: 5 });
+    expect(next.find((x) => x.targetId === "b")).toEqual(b);
+  });
+
+  it("never duplicates the target", () => {
+    const next = upsertAnimation([a, b], "a", { type: "zoomIn" });
+    expect(next.filter((x) => x.targetId === "a")).toHaveLength(1);
+    expect(next.find((x) => x.targetId === "a")!.type).toBe("zoomIn");
   });
 });

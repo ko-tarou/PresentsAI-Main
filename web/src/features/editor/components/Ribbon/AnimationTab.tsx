@@ -64,11 +64,35 @@ function targetIdFor(_canvas: NonNullable<ReturnType<typeof useEditorStore.getSt
   return ensureObjectId(obj as Parameters<typeof ensureObjectId>[0]);
 }
 
+/**
+ * Replace (or insert) the animation for `targetId` in `existing`, merging the
+ * given patch onto it. Order/delay authoring edits go through here so the rest
+ * of the list is preserved and the target keeps a single animation. A fresh
+ * animation defaults to a fade-in entrance at the end of the play order.
+ */
+export function upsertAnimation(
+  existing: ElementAnimation[],
+  targetId: string,
+  patch: Partial<Omit<ElementAnimation, "targetId">>,
+): ElementAnimation[] {
+  const others = existing.filter((a) => a.targetId !== targetId);
+  const current = existing.find((a) => a.targetId === targetId);
+  const base: ElementAnimation = current ?? {
+    targetId,
+    type: "fadeIn",
+    order: others.length,
+    durationMs: ANIMATION_DURATION_MS,
+  };
+  return [...others, { ...base, ...patch, targetId }];
+}
+
 export function AnimationTab() {
   const { canvas, activeSlideId, presentationId } = useEditorStore();
   const { slides, updateSlideMeta } = useSlideStore();
   const { accessToken } = useAuthStore();
   const [selected, setSelected] = useState<AnimChoice>("none");
+  const [delayMs, setDelayMs] = useState(0);
+  const [order, setOrder] = useState(0);
 
   // Reflect the saved animation of whatever object is currently selected, the
   // same way TransitionTab reflects the active slide's transition. Without this
@@ -79,12 +103,16 @@ export function AnimationTab() {
       const obj = canvas.getActiveObject();
       if (!obj) {
         setSelected("none");
+        setDelayMs(0);
+        setOrder(0);
         return;
       }
       const id = (obj as { id?: string }).id;
       const anims = slides.find((s) => s.id === activeSlideId)?.animations ?? [];
       const match = id ? anims.find((a) => a.targetId === id) : undefined;
       setSelected(fromModelAnimation(match?.type));
+      setDelayMs(match?.delayMs ?? 0);
+      setOrder(match?.order ?? 0);
     };
     sync();
     canvas.on("selection:created", sync);
@@ -97,6 +125,23 @@ export function AnimationTab() {
     };
   }, [canvas, activeSlideId, slides]);
 
+  // Persist an updated animation list to the store and (if signed in) the API.
+  async function persist(animations: ElementAnimation[]) {
+    if (!activeSlideId) return;
+    updateSlideMeta(activeSlideId, { animations });
+    if (accessToken && presentationId) {
+      await slidesApi.updateMeta(accessToken, presentationId, activeSlideId, { animations });
+    }
+  }
+
+  // Stable target id of the active object, or null if nothing is selected.
+  function activeTargetId(): string | null {
+    if (!canvas) return null;
+    const obj = canvas.getActiveObject();
+    if (!obj) return null;
+    return targetIdFor(canvas, obj);
+  }
+
   async function apply(type: AnimChoice) {
     setSelected(type);
     if (type === "none" || !canvas) return;
@@ -104,24 +149,22 @@ export function AnimationTab() {
     if (!obj) return;
     void animateEntrance(canvas, obj, type);
 
-    if (!activeSlideId) return;
-    const targetId = targetIdFor(canvas, obj);
+    const targetId = activeTargetId();
     if (targetId === null) return;
-
-    // Replace any existing animation for this target, keep order ascending.
     const existing = slides.find((s) => s.id === activeSlideId)?.animations ?? [];
-    const others = existing.filter((a) => a.targetId !== targetId);
-    const next: ElementAnimation = {
-      targetId,
-      type: toModelAnimation(type),
-      order: others.length,
-      durationMs: ANIMATION_DURATION_MS,
-    };
-    const animations = [...others, next];
-    updateSlideMeta(activeSlideId, { animations });
-    if (accessToken && presentationId) {
-      await slidesApi.updateMeta(accessToken, presentationId, activeSlideId, { animations });
-    }
+    await persist(upsertAnimation(existing, targetId, { type: toModelAnimation(type) }));
+  }
+
+  // Update the timing (delay / play order) of the selected object's animation.
+  // Only meaningful once an animation exists; upsert seeds a fade-in otherwise
+  // so timing can be authored before picking a motion.
+  async function patchTiming(patch: { delayMs?: number; order?: number }) {
+    if (patch.delayMs !== undefined) setDelayMs(patch.delayMs);
+    if (patch.order !== undefined) setOrder(patch.order);
+    const targetId = activeTargetId();
+    if (targetId === null) return;
+    const existing = slides.find((s) => s.id === activeSlideId)?.animations ?? [];
+    await persist(upsertAnimation(existing, targetId, patch));
   }
 
   function preview() {
@@ -158,6 +201,62 @@ export function AnimationTab() {
           title="選択したアニメーションを再生"
         />
       </RibbonGroup>
+      <RibbonDivider />
+
+      <RibbonGroup label="タイミング">
+        <div className="flex items-center gap-3 px-1">
+          <TimingField
+            label="遅延 (ms)"
+            value={delayMs}
+            min={0}
+            step={100}
+            disabled={!canvas || selected === "none"}
+            onCommit={(v) => void patchTiming({ delayMs: v })}
+            title="再生開始までの待ち時間（ミリ秒）"
+          />
+          <TimingField
+            label="順序"
+            value={order}
+            min={0}
+            step={1}
+            disabled={!canvas || selected === "none"}
+            onCommit={(v) => void patchTiming({ order: v })}
+            title="スライド内での再生順（小さいほど先に再生）"
+          />
+        </div>
+      </RibbonGroup>
     </div>
+  );
+}
+
+// A compact labeled number input used for animation timing (delay / order).
+// Commits on change; clamps to `min` so negative values can't be persisted.
+function TimingField({
+  label, value, min, step, disabled, onCommit, title,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  step: number;
+  disabled?: boolean;
+  onCommit: (value: number) => void;
+  title?: string;
+}) {
+  return (
+    <label className="flex flex-col items-start gap-0.5" title={title}>
+      <span className="text-[10px] leading-none text-[#605E5C]">{label}</span>
+      <input
+        type="number"
+        min={min}
+        step={step}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => {
+          const n = Number(e.target.value);
+          onCommit(Number.isFinite(n) ? Math.max(min, n) : min);
+        }}
+        className="h-7 w-16 rounded border border-border bg-white px-1.5 text-xs text-content-primary disabled:opacity-40"
+      />
+    </label>
   );
 }
