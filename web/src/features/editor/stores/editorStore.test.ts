@@ -39,4 +39,17 @@ describe("useEditorStore", () => {
     useEditorStore.getState().setZoom(1.5);
     expect(useEditorStore.getState().zoom).toBe(1.5);
   });
+
+  it("toggleMembers flips the members panel visibility", () => {
+    useEditorStore.setState({ showMembers: false });
+    useEditorStore.getState().toggleMembers();
+    expect(useEditorStore.getState().showMembers).toBe(true);
+    useEditorStore.getState().toggleMembers();
+    expect(useEditorStore.getState().showMembers).toBe(false);
+  });
+
+  it("setShowMembers sets the members panel visibility directly", () => {
+    useEditorStore.getState().setShowMembers(true);
+    expect(useEditorStore.getState().showMembers).toBe(true);
+  });
 });

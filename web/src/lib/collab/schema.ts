@@ -99,6 +99,41 @@ export function yMapToSlideContent(slide: YSlideMap): SlideContent {
   return content;
 }
 
+/** Returns the slide Y.Map with the given id, or `undefined` if absent. */
+export function findSlideMap(doc: Y.Doc, slideId: string): YSlideMap | undefined {
+  return getSlides(doc).toArray().find(
+    (s) => s.get(SLIDE_FIELDS.id) === slideId,
+  );
+}
+
+/**
+ * Overwrites a slide's content in the shared doc (objects + version +
+ * background) with a restored `SlideContent`, leaving structural fields
+ * (id, position, notes) untouched. Runs in one transaction so peers and the
+ * local Fabric binding observe a single atomic update — this is how a restored
+ * version becomes visible without breaking live collaboration (ADR-0011: the
+ * Yjs doc is the source of truth, `slides.content` is the projection). Returns
+ * false if the slide is not present in the doc.
+ */
+export function replaceSlideContent(
+  doc: Y.Doc,
+  slideId: string,
+  content: SlideContent,
+): boolean {
+  const slide = findSlideMap(doc, slideId);
+  if (!slide) return false;
+  doc.transact(() => {
+    slide.set(SLIDE_FIELDS.version, content.version);
+    if (content.background !== undefined) {
+      slide.set(SLIDE_FIELDS.background, content.background);
+    }
+    const objects = new Y.Array<YObjectMap>();
+    objects.push(content.objects.map((o) => objectToYMap(o)));
+    slide.set(SLIDE_FIELDS.objects, objects);
+  });
+  return true;
+}
+
 /** Serializes the whole doc back to an ordered list of `SlideContent`. */
 export function docToSlideContents(doc: Y.Doc): SlideContent[] {
   return getSlides(doc).map((s) => yMapToSlideContent(s));
