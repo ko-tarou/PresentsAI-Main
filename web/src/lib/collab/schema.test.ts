@@ -8,6 +8,8 @@ import {
   initializeDoc,
   yMapToSlideContent,
   docToSlideContents,
+  findSlideMap,
+  replaceSlideContent,
   type YObjectMap,
 } from "./schema";
 
@@ -96,5 +98,49 @@ describe("collab schema", () => {
 
     expect(docToSlideContents(b)).toEqual(docToSlideContents(a));
     expect(getSlides(b).get(0).get("id")).toBe("slide-1");
+  });
+
+  it("findSlideMap returns the slide map by id (or undefined)", () => {
+    const doc = new Y.Doc();
+    initializeDoc(doc, [makeSlide({ id: "s1" }), makeSlide({ id: "s2" })]);
+    expect(findSlideMap(doc, "s2")?.get("id")).toBe("s2");
+    expect(findSlideMap(doc, "missing")).toBeUndefined();
+  });
+
+  it("replaceSlideContent swaps objects/version/background, keeps structure", () => {
+    const doc = new Y.Doc();
+    initializeDoc(doc, [makeSlide({ id: "s1", position: 3, notes: "keep me" })]);
+    const ok = replaceSlideContent(doc, "s1", {
+      version: "9.9.9",
+      background: "#000000",
+      objects: [{ id: "restored", type: "circle" }],
+    });
+    expect(ok).toBe(true);
+    const slide = findSlideMap(doc, "s1")!;
+    // Structural fields untouched.
+    expect(slide.get("position")).toBe(3);
+    expect(slide.get("notes")).toBe("keep me");
+    // Content replaced.
+    const content = yMapToSlideContent(slide);
+    expect(content.version).toBe("9.9.9");
+    expect(content.background).toBe("#000000");
+    expect(content.objects).toEqual([{ id: "restored", type: "circle" }]);
+  });
+
+  it("replaceSlideContent is observed as a single transaction by peers", () => {
+    const doc = new Y.Doc();
+    initializeDoc(doc, [makeSlide({ id: "s1" })]);
+    let updates = 0;
+    getSlides(doc).observeDeep(() => { updates += 1; });
+    replaceSlideContent(doc, "s1", { version: "2.0", objects: [{ id: "x", type: "rect" }] });
+    expect(updates).toBe(1);
+  });
+
+  it("replaceSlideContent returns false for an unknown slide", () => {
+    const doc = new Y.Doc();
+    initializeDoc(doc, [makeSlide({ id: "s1" })]);
+    expect(
+      replaceSlideContent(doc, "nope", { version: "1.0", objects: [] }),
+    ).toBe(false);
   });
 });
