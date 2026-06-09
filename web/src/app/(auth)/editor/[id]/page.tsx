@@ -30,6 +30,7 @@ import { RealtimeCoach } from "@features/ai/components/RealtimeCoach";
 import { SpeakerNotesPanel } from "@features/editor/components/SpeakerNotes";
 import { LayersPanel } from "@features/editor/components/LayersPanel";
 import { CommentsPanel } from "@features/editor/components/CommentsPanel";
+import { VersionHistoryPanel } from "@features/editor/components/VersionHistoryPanel";
 import type { Slide } from "@shared/types/slide";
 
 type AITab = "ai" | "coach" | null;
@@ -38,7 +39,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas, showLayers, showComments } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas, showLayers, showComments, showVersions } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
@@ -159,6 +160,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </aside>
           )}
           {showComments && <CommentsPanel />}
+          {showVersions && <VersionHistoryPanel doc={doc} />}
         </div>
       )}
 
