@@ -2,7 +2,7 @@ import type { Canvas, FabricObject } from "fabric";
 
 export type TransitionType = "none"|"fade"|"slide-left"|"slide-right"|"zoom";
 
-export type EntranceType = "fade-in"|"fly-in-left"|"bounce";
+export type EntranceType = "fade-in"|"fly-in-left"|"bounce"|"zoom-in";
 
 // Animate a single object as an entrance preview on the canvas.
 // Restores the object's original properties when done so it is non-destructive.
@@ -29,6 +29,13 @@ export async function animateEntrance(
     obj.animate(
       { scaleX: targetScaleX, scaleY: targetScaleY },
       { duration, easing: easeOutBounce, onChange: render },
+    );
+  } else if (type === "zoom-in") {
+    obj.set({ scaleX: targetScaleX * 0.2, scaleY: targetScaleY * 0.2 });
+    render();
+    obj.animate(
+      { scaleX: targetScaleX, scaleY: targetScaleY },
+      { duration, easing: easeOutCubic, onChange: render },
     );
   }
   await delay(duration);
