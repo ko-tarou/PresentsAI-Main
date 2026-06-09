@@ -1,5 +1,10 @@
 export { Button } from "./Button";
 export { Input } from "./Input";
+export { Textarea } from "./Textarea";
+export { Select } from "./Select";
 export { Avatar } from "./Avatar";
 export { Badge } from "./Badge";
+export { Card } from "./Card";
+export { Modal } from "./Modal";
 export { Popover } from "./Popover";
+export { RoleBadge, ROLE_LABELS, type Role } from "./RoleBadge";
