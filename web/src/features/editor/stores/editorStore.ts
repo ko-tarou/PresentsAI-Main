@@ -18,6 +18,7 @@ interface EditorState {
   showComments: boolean;
   showVersions: boolean;
   showMembers: boolean;
+  showProofread: boolean;
 
   setCanvas: (canvas: Canvas | null) => void;
   setActiveTool: (tool: EditorTool) => void;
@@ -38,6 +39,8 @@ interface EditorState {
   setShowVersions: (show: boolean) => void;
   toggleMembers: () => void;
   setShowMembers: (show: boolean) => void;
+  toggleProofread: () => void;
+  setShowProofread: (show: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -54,6 +57,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   showComments: false,
   showVersions: false,
   showMembers: false,
+  showProofread: false,
 
   setCanvas: (canvas) => set({ canvas }),
   setActiveTool: (activeTool) => set({ activeTool }),
@@ -74,4 +78,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setShowVersions: (showVersions) => set({ showVersions }),
   toggleMembers: () => set((s) => ({ showMembers: !s.showMembers })),
   setShowMembers: (showMembers) => set({ showMembers }),
+  toggleProofread: () => set((s) => ({ showProofread: !s.showProofread })),
+  setShowProofread: (showProofread) => set({ showProofread }),
 }));

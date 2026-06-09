@@ -32,6 +32,7 @@ import { LayersPanel } from "@features/editor/components/LayersPanel";
 import { CommentsPanel } from "@features/editor/components/CommentsPanel";
 import { VersionHistoryPanel } from "@features/editor/components/VersionHistoryPanel";
 import { MembersPanel } from "@features/editor/components/MembersPanel";
+import { ProofreadPanel } from "@features/editor/components/ProofreadPanel";
 import type { Slide } from "@shared/types/slide";
 
 type AITab = "ai" | "coach" | null;
@@ -40,7 +41,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas, showLayers, showComments, showVersions, showMembers } = useEditorStore();
+  const { setPresentationId, setActiveSlide, activeTool, notesVisible, viewMode, activeSlideId, canvas, showLayers, showComments, showVersions, showMembers, showProofread } = useEditorStore();
   const { setSlides, slides } = useSlideStore();
   const [aiTab, setAiTab] = useState<AITab>(null);
   const [title, setTitle] = useState("Untitled");
@@ -163,6 +164,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           {showComments && <CommentsPanel />}
           {showVersions && <VersionHistoryPanel doc={doc} />}
           {showMembers && <MembersPanel peers={peers} />}
+          {showProofread && <ProofreadPanel />}
         </div>
       )}
 
