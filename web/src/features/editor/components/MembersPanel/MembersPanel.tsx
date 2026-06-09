@@ -3,20 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { membersApi, type Member, type MemberRole } from "@shared/api/members";
+import { Avatar, RoleBadge, Select } from "@shared/components/ui";
 import type { RemotePresence } from "@lib/collab/presence";
 import { isMemberOnline } from "./presenceMatch";
-
-const ROLE_LABELS: Record<MemberRole, string> = {
-  owner: "オーナー",
-  editor: "編集者",
-  viewer: "閲覧者",
-};
-
-const ROLE_BADGE: Record<MemberRole, string> = {
-  owner: "bg-purple-100 text-purple-700",
-  editor: "bg-blue-100 text-blue-700",
-  viewer: "bg-gray-100 text-gray-600",
-};
 
 /**
  * In-editor roster: lists collaborators with their role (editable for
@@ -69,36 +58,34 @@ export function MembersPanel({ peers }: { peers: RemotePresence[] }) {
   const onlineCount = members.filter((m) => isMemberOnline(m, peers)).length;
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-l bg-white">
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <p className="text-xs font-semibold text-gray-600">メンバー ({members.length})</p>
+    <aside className="side-panel w-64">
+      <div className="side-panel-header">
+        <p className="side-panel-title">メンバー ({members.length})</p>
         {loading ? (
-          <span className="text-xs text-gray-400">読み込み中...</span>
+          <span className="text-xs text-content-tertiary">読み込み中...</span>
         ) : (
-          <span className="text-[10px] text-gray-400">{onlineCount} 人がオンライン</span>
+          <span className="text-[10px] text-content-tertiary">{onlineCount} 人がオンライン</span>
         )}
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {members.length === 0 && !loading ? (
-          <p className="text-xs text-gray-400">まだ共有されていません。</p>
+          <p className="text-xs text-content-tertiary">まだ共有されていません。</p>
         ) : (
           members.map((member) => {
             const online = isMemberOnline(member, peers);
             return (
               <div
                 key={member.userId}
-                className="flex items-center gap-2 rounded-lg border bg-gray-50 p-2"
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface-subtle p-2"
               >
                 {/* Avatar with online indicator */}
                 <div className="relative shrink-0">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                    {(member.displayName || member.email).charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar name={member.displayName || member.email} size="sm" />
                   <span
                     aria-label={online ? "オンライン" : "オフライン"}
-                    className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white ${
-                      online ? "bg-green-500" : "bg-gray-300"
+                    className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface ${
+                      online ? "bg-success" : "bg-content-tertiary"
                     }`}
                   />
                 </div>
@@ -106,30 +93,26 @@ export function MembersPanel({ peers }: { peers: RemotePresence[] }) {
                 {/* Name / email */}
                 <div className="min-w-0 flex-1">
                   {member.displayName && (
-                    <p className="truncate text-xs font-medium text-gray-800">
+                    <p className="truncate text-xs font-medium text-content-primary">
                       {member.displayName}
                     </p>
                   )}
-                  <p className="truncate text-[10px] text-gray-500">{member.email}</p>
+                  <p className="truncate text-[10px] text-content-secondary">{member.email}</p>
                 </div>
 
                 {/* Role */}
                 {member.role === "owner" ? (
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${ROLE_BADGE[member.role]}`}
-                  >
-                    {ROLE_LABELS[member.role]}
-                  </span>
+                  <RoleBadge role={member.role} className="shrink-0" />
                 ) : (
-                  <select
+                  <Select
                     aria-label={`${member.displayName || member.email} の役割`}
                     value={member.role}
                     onChange={(e) => changeRole(member, e.target.value as MemberRole)}
-                    className="shrink-0 rounded border px-1 py-0.5 text-[10px] text-gray-700 focus:border-blue-400 focus:outline-none"
+                    className="shrink-0 px-1.5 py-0.5 text-[10px]"
                   >
                     <option value="viewer">閲覧者</option>
                     <option value="editor">編集者</option>
-                  </select>
+                  </Select>
                 )}
               </div>
             );

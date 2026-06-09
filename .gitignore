@@ -58,3 +58,8 @@ e2e/node_modules/
 e2e/test-results/
 e2e/playwright-report/
 e2e/.playwright/
+
+# Local dev runtime (docker-compose volumes)
+.localdb/
+.locallogs/
+.localuploads/

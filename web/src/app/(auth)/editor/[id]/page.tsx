@@ -151,13 +151,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             {notesVisible && <SpeakerNotesPanel />}
           </main>
           {showLayers && <LayersPanel moveObject={moveObject} />}
-          <aside className="flex w-56 shrink-0 flex-col border-l bg-white overflow-y-auto">
+          <aside className="side-panel w-56 overflow-y-auto">
             <StylePanel />
             <TokenPanel />
             <ImagePanel />
           </aside>
           {aiTab && (
-            <aside className="flex w-64 shrink-0 flex-col border-l bg-white overflow-y-auto">
+            <aside className="side-panel w-64 overflow-y-auto">
               {aiTab === "ai" ? <AIPanel /> : <RealtimeCoach />}
             </aside>
           )}
