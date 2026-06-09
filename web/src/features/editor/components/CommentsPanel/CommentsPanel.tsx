@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { commentsApi } from "@shared/api/comments";
+import { Button, Textarea } from "@shared/components/ui";
 import type { Comment } from "@shared/types/comment";
 
 // Presentation-level comments. Slide/object anchoring is intentionally out of
@@ -44,27 +45,27 @@ export function CommentsPanel() {
   }, [body, accessToken, presentationId, posting]);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-l bg-white">
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <p className="text-xs font-semibold text-gray-600">コメント</p>
-        {loading && <span className="text-xs text-gray-400">読み込み中...</span>}
+    <aside className="side-panel w-64">
+      <div className="side-panel-header">
+        <p className="side-panel-title">コメント</p>
+        {loading && <span className="text-xs text-content-tertiary">読み込み中...</span>}
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-3">
         {comments.length === 0 && !loading ? (
-          <p className="text-xs text-gray-400">まだコメントはありません。</p>
+          <p className="text-xs text-content-tertiary">まだコメントはありません。</p>
         ) : (
           comments.map((c) => (
-            <div key={c.ID} className="rounded-lg border bg-gray-50 p-2">
+            <div key={c.ID} className="rounded-lg border border-border bg-surface-subtle p-2">
               <div className="mb-0.5 flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs font-medium text-content-secondary">
                   {c.AuthorName || "匿名"}
                 </span>
-                <span className="text-[10px] text-gray-400">
+                <span className="text-[10px] text-content-tertiary">
                   {c.CreatedAt ? new Date(c.CreatedAt).toLocaleString() : ""}
                 </span>
               </div>
-              <p className="whitespace-pre-wrap break-words text-xs text-gray-700">
+              <p className="whitespace-pre-wrap break-words text-xs text-content-secondary">
                 {c.Body}
               </p>
             </div>
@@ -72,20 +73,22 @@ export function CommentsPanel() {
         )}
       </div>
 
-      <div className="border-t p-3">
-        <textarea
+      <div className="border-t border-border p-3">
+        <Textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="コメントを追加..."
-          className="w-full h-16 resize-none rounded-lg border p-2 text-xs text-gray-700 focus:border-blue-400 focus:outline-none"
+          className="h-16 resize-none text-xs"
         />
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={submit}
           disabled={!body.trim() || posting}
-          className="mt-2 w-full rounded-lg bg-blue-600 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 w-full"
         >
           {posting ? "投稿中..." : "投稿"}
-        </button>
+        </Button>
       </div>
     </aside>
   );

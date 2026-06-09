@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { Share2 } from "lucide-react";
+import { Button } from "@shared/components/ui";
 import { ShareModal } from "./ShareModal";
 
 interface ShareButtonProps {
@@ -12,12 +14,10 @@ export function ShareButton({ presentationId, presentationTitle }: ShareButtonPr
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-      >
-        🔗 共有
-      </button>
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        <Share2 className="h-3.5 w-3.5" />
+        共有
+      </Button>
       {open && (
         <ShareModal
           presentationId={presentationId}

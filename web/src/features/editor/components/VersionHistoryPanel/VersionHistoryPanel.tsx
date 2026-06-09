@@ -5,6 +5,7 @@ import { History, RotateCcw, Save } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { versionsApi } from "@shared/api/versions";
+import { Button } from "@shared/components/ui";
 import { replaceSlideContent } from "@lib/collab/schema";
 import type { SlideVersion } from "@shared/types/version";
 
@@ -83,50 +84,54 @@ export function VersionHistoryPanel({ doc }: VersionHistoryPanelProps) {
   );
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-l bg-white">
-      <div className="flex items-center justify-between border-b px-3 py-2">
+    <aside className="side-panel w-64">
+      <div className="side-panel-header">
         <div className="flex items-center gap-1.5">
-          <History className="h-3.5 w-3.5 text-gray-500" />
-          <p className="text-xs font-semibold text-gray-600">バージョン履歴</p>
+          <History className="h-3.5 w-3.5 text-content-tertiary" />
+          <p className="side-panel-title">バージョン履歴</p>
         </div>
-        {loading && <span className="text-xs text-gray-400">読み込み中...</span>}
+        {loading && <span className="text-xs text-content-tertiary">読み込み中...</span>}
       </div>
 
-      <div className="border-b p-3">
-        <button
+      <div className="border-b border-border p-3">
+        <Button
+          variant="primary"
+          size="sm"
           onClick={snapshot}
           disabled={saving || !activeSlideId || !canvas}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full"
         >
           <Save className="h-3.5 w-3.5" />
           {saving ? "保存中..." : "現在の状態を保存"}
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {versions.length === 0 && !loading ? (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-content-tertiary">
             このスライドの保存済みバージョンはありません。
           </p>
         ) : (
           versions.map((v) => (
-            <div key={v.ID} className="rounded-lg border bg-gray-50 p-2">
+            <div key={v.ID} className="rounded-lg border border-border bg-surface-subtle p-2">
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs font-medium text-content-secondary">
                   バージョン {v.Version}
                 </span>
-                <span className="text-[10px] text-gray-400">
+                <span className="text-[10px] text-content-tertiary">
                   {v.CreatedAt ? new Date(v.CreatedAt).toLocaleString() : ""}
                 </span>
               </div>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => restore(v)}
                 disabled={restoringId !== null}
-                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-gray-300 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full text-[11px]"
               >
                 <RotateCcw className="h-3 w-3" />
                 {restoringId === v.ID ? "復元中..." : "このバージョンに復元"}
-              </button>
+              </Button>
             </div>
           ))
         )}
