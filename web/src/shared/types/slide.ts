@@ -63,7 +63,8 @@ export type ElementAnimationType =
   | "slideIn"
   | "slideOut"
   | "zoomIn"
-  | "zoomOut";
+  | "zoomOut"
+  | "bounce";
 
 export type FabricObject = Record<string, unknown>;
 

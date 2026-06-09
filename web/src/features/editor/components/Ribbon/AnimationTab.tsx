@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Square, Sparkles, ArrowRightToLine, ArrowDownToLine, Play } from "lucide-react";
+import { Square, Sparkles, ArrowRightToLine, ArrowDownToLine, ZoomIn, Play } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useSlideStore } from "../../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
@@ -19,16 +19,19 @@ const ANIMATIONS: { type: AnimChoice; label: string; icon: React.ReactNode }[] =
   { type: "none", label: "なし", icon: <Square /> },
   { type: "fade-in", label: "フェードイン", icon: <Sparkles /> },
   { type: "fly-in-left", label: "スライドイン", icon: <ArrowRightToLine /> },
+  { type: "zoom-in", label: "ズームイン", icon: <ZoomIn /> },
   { type: "bounce", label: "バウンス", icon: <ArrowDownToLine /> },
 ];
 
-// Map the preview-level entrance to the persisted model animation type.
-// "bounce" has no model equivalent yet and stores as the closest entrance.
+// Map the preview-level entrance to the persisted model animation type. Each
+// entrance now has a matching model type, so the stored type reflects the motion
+// actually played (no more "bounce stored as zoomIn" mismatch).
 export function toModelAnimation(t: EntranceType): ElementAnimationType {
   switch (t) {
     case "fade-in": return "fadeIn";
     case "fly-in-left": return "slideIn";
-    case "bounce": return "zoomIn";
+    case "zoom-in": return "zoomIn";
+    case "bounce": return "bounce";
   }
 }
 
@@ -46,6 +49,8 @@ export function fromModelAnimation(t: ElementAnimationType | undefined): AnimCho
       return "fly-in-left";
     case "zoomIn":
     case "zoomOut":
+      return "zoom-in";
+    case "bounce":
       return "bounce";
     default:
       return "none";

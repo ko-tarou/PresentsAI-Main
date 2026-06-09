@@ -41,8 +41,9 @@ describe("modelAnimationToEntrance", () => {
     expect(modelAnimationToEntrance("fadeOut")).toBe("fade-in");
     expect(modelAnimationToEntrance("slideIn")).toBe("fly-in-left");
     expect(modelAnimationToEntrance("slideOut")).toBe("fly-in-left");
-    expect(modelAnimationToEntrance("zoomIn")).toBe("bounce");
-    expect(modelAnimationToEntrance("zoomOut")).toBe("bounce");
+    expect(modelAnimationToEntrance("zoomIn")).toBe("zoom-in");
+    expect(modelAnimationToEntrance("zoomOut")).toBe("zoom-in");
+    expect(modelAnimationToEntrance("bounce")).toBe("bounce");
   });
 });
 

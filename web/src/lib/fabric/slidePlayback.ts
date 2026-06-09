@@ -41,6 +41,8 @@ export function modelAnimationToEntrance(t: ElementAnimationType): EntranceType 
       return "fly-in-left";
     case "zoomIn":
     case "zoomOut":
+      return "zoom-in";
+    case "bounce":
       return "bounce";
   }
 }
