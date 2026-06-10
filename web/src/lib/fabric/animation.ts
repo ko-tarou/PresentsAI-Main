@@ -4,6 +4,8 @@ export type TransitionType = "none"|"fade"|"slide-left"|"slide-right"|"zoom";
 
 export type EntranceType = "fade-in"|"fly-in-left"|"bounce"|"zoom-in";
 
+export type ExitType = "fade-out"|"fly-out-left"|"zoom-out";
+
 // Animate a single object as an entrance preview on the canvas.
 // Restores the object's original properties when done so it is non-destructive.
 export async function animateEntrance(
@@ -41,10 +43,52 @@ export async function animateEntrance(
   await delay(duration);
 }
 
+// Animate a single object as an exit preview on the canvas. Mirrors
+// animateEntrance: the object starts from its current (visible) state and
+// animates toward a hidden state, then its original properties are restored so
+// the call is non-destructive (the element stays on the slide for editing).
+export async function animateExit(
+  canvas: Canvas, obj: FabricObject, type: ExitType, duration = 600,
+): Promise<void> {
+  const startLeft = obj.left ?? 0;
+  const startOpacity = obj.opacity ?? 1;
+  const startScaleX = obj.scaleX ?? 1;
+  const startScaleY = obj.scaleY ?? 1;
+  const render = () => canvas.requestRenderAll();
+  const restore = () => {
+    obj.set({
+      left: startLeft, opacity: startOpacity,
+      scaleX: startScaleX, scaleY: startScaleY,
+    });
+    render();
+  };
+
+  if (type === "fade-out") {
+    obj.animate({ opacity: 0 }, { duration, onChange: render });
+  } else if (type === "fly-out-left") {
+    obj.animate(
+      { left: startLeft - canvas.getWidth() },
+      { duration, easing: easeInCubic, onChange: render },
+    );
+  } else if (type === "zoom-out") {
+    obj.animate(
+      { scaleX: startScaleX * 0.2, scaleY: startScaleY * 0.2, opacity: 0 },
+      { duration, easing: easeInCubic, onChange: render },
+    );
+  }
+  await delay(duration);
+  restore();
+}
+
 // Fabric easing functions take (t, b, c, d): time, begin, change, duration.
 function easeOutCubic(t: number, b: number, c: number, d: number): number {
   const p = t / d - 1;
   return c * (p * p * p + 1) + b;
+}
+
+function easeInCubic(t: number, b: number, c: number, d: number): number {
+  const p = t / d;
+  return c * p * p * p + b;
 }
 
 function easeOutBounce(t: number, b: number, c: number, d: number): number {
