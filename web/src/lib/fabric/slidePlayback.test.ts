@@ -2,19 +2,25 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Canvas, FabricObject } from "fabric";
 import type { ElementAnimation } from "@shared/types/slide";
 
-// Spy on the entrance primitive so we can assert orchestration without a real
-// fabric canvas (jsdom can't run fabric's rendering pipeline).
+// Spy on the entrance / exit primitives so we can assert orchestration without
+// a real fabric canvas (jsdom can't run fabric's rendering pipeline).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const animateEntranceSpy = vi.fn((..._args: any[]) => Promise.resolve());
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const animateExitSpy = vi.fn((..._args: any[]) => Promise.resolve());
 vi.mock("./animation", () => ({
   animateEntrance: (...args: unknown[]) => animateEntranceSpy(...args),
+  animateExit: (...args: unknown[]) => animateExitSpy(...args),
 }));
 
 import {
   modelTransitionToPreview,
   modelAnimationToEntrance,
+  modelAnimationToExit,
+  isExitAnimation,
   hasTransition,
   playSlideAnimations,
+  playSlideExitAnimations,
 } from "./slidePlayback";
 
 function makeObj(id: string): FabricObject {
@@ -87,5 +93,67 @@ describe("playSlideAnimations", () => {
     await playSlideAnimations(makeCanvas([a]), anims);
     expect(animateEntranceSpy).toHaveBeenCalledTimes(1);
     expect(animateEntranceSpy).toHaveBeenCalledWith(expect.anything(), a, "fade-in", 600);
+  });
+});
+
+describe("isExitAnimation", () => {
+  it("is true only for the Out variants", () => {
+    expect(isExitAnimation("fadeOut")).toBe(true);
+    expect(isExitAnimation("slideOut")).toBe(true);
+    expect(isExitAnimation("zoomOut")).toBe(true);
+    expect(isExitAnimation("fadeIn")).toBe(false);
+    expect(isExitAnimation("slideIn")).toBe(false);
+    expect(isExitAnimation("zoomIn")).toBe(false);
+    expect(isExitAnimation("bounce")).toBe(false);
+  });
+});
+
+describe("modelAnimationToExit", () => {
+  it("maps each Out variant to its preview exit type", () => {
+    expect(modelAnimationToExit("fadeOut")).toBe("fade-out");
+    expect(modelAnimationToExit("slideOut")).toBe("fly-out-left");
+    expect(modelAnimationToExit("zoomOut")).toBe("zoom-out");
+  });
+  it("returns undefined for entrance / bounce types", () => {
+    expect(modelAnimationToExit("fadeIn")).toBeUndefined();
+    expect(modelAnimationToExit("slideIn")).toBeUndefined();
+    expect(modelAnimationToExit("zoomIn")).toBeUndefined();
+    expect(modelAnimationToExit("bounce")).toBeUndefined();
+  });
+});
+
+describe("playSlideExitAnimations", () => {
+  beforeEach(() => animateExitSpy.mockClear());
+
+  it("no-ops when there are no animations", async () => {
+    await playSlideExitAnimations(makeCanvas([]), undefined);
+    await playSlideExitAnimations(makeCanvas([]), []);
+    expect(animateExitSpy).not.toHaveBeenCalled();
+  });
+
+  it("plays only the Out variants, ignoring entrances", async () => {
+    const a = makeObj("obj-a");
+    const b = makeObj("obj-b");
+    const c = makeObj("obj-c");
+    const anims: ElementAnimation[] = [
+      { targetId: "obj-a", type: "fadeIn", order: 0 },
+      { targetId: "obj-b", type: "fadeOut", order: 1, durationMs: 300 },
+      { targetId: "obj-c", type: "slideOut", order: 2 },
+    ];
+    await playSlideExitAnimations(makeCanvas([a, b, c]), anims);
+    expect(animateExitSpy).toHaveBeenCalledTimes(2);
+    expect(animateExitSpy).toHaveBeenCalledWith(expect.anything(), b, "fade-out", 300);
+    expect(animateExitSpy).toHaveBeenCalledWith(expect.anything(), c, "fly-out-left", 600);
+  });
+
+  it("skips exits whose target object is missing", async () => {
+    const a = makeObj("obj-a");
+    const anims: ElementAnimation[] = [
+      { targetId: "obj-a", type: "zoomOut", order: 0 },
+      { targetId: "obj-gone", type: "fadeOut", order: 1 },
+    ];
+    await playSlideExitAnimations(makeCanvas([a]), anims);
+    expect(animateExitSpy).toHaveBeenCalledTimes(1);
+    expect(animateExitSpy).toHaveBeenCalledWith(expect.anything(), a, "zoom-out", 600);
   });
 });
