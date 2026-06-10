@@ -2,7 +2,7 @@
 import { use, useEffect, useRef, useState, useCallback } from "react";
 import { createCanvas, loadFromJSON, fitToContainer } from "@lib/fabric/canvas";
 import { playTransition } from "@lib/fabric/animation";
-import { modelTransitionToPreview, playSlideAnimations } from "@lib/fabric/slidePlayback";
+import { modelTransitionToPreview, playSlideAnimations, playSlideExitAnimations, isExitAnimation } from "@lib/fabric/slidePlayback";
 import { ViewerSocket, type ViewerStatus } from "@lib/realtime/presenter";
 import type { Slide } from "@shared/types/slide";
 
@@ -22,6 +22,9 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
   const [status, setStatus] = useState<ViewerStatus>("connecting");
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // The slide currently shown, so we can play its exit animations when the
+  // presenter advances to the next slide (mirrors the presenter view).
+  const shownSlideRef = useRef<Slide | null>(null);
 
   useEffect(() => {
     fetch(`/api/presentations/${id}/slides`).then(r=>r.json()).then((d:{items:Slide[]})=>setSlides(d.items??[]));
@@ -46,13 +49,24 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
     const c = createCanvas(canvasRef.current);
     fitToContainer(c, containerRef.current.clientWidth);
     let cancelled = false;
-    // Same playback the presenter sees: slide-level transition first, then the
-    // per-element entrance animations once the content is loaded.
+    // Same playback the presenter sees: when leaving a slide that has exit
+    // animations, render it and play the exits first, then the slide-level
+    // transition, then load the new content and play its entrance animations.
     (async () => {
+      const outgoing = shownSlideRef.current;
+      const hasExit = outgoing?.animations?.some((a) => isExitAnimation(a.type));
+      if (outgoing && outgoing.id !== slide.id && hasExit) {
+        await loadFromJSON(c, outgoing.content);
+        if (cancelled) return;
+        await playSlideExitAnimations(c, outgoing.animations);
+      }
+      if (cancelled) return;
       const stage = c.wrapperEl;
       if (stage) await playTransition(stage, modelTransitionToPreview(slide.transition?.type), slide.transition?.durationMs);
       await loadFromJSON(c, slide.content);
-      if (!cancelled) await playSlideAnimations(c, slide.animations);
+      if (cancelled) return;
+      shownSlideRef.current = slide;
+      await playSlideAnimations(c, slide.animations);
     })();
     return () => { cancelled = true; c.dispose(); };
   }, [cur, slides]);
