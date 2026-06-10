@@ -1,17 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Square, Sparkles, ArrowRightToLine, ArrowDownToLine, ZoomIn, Play } from "lucide-react";
+import { Square, Sparkles, ArrowRightToLine, ArrowLeftToLine, ArrowDownToLine, ZoomIn, ZoomOut, Play } from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useSlideStore } from "../../stores/slideStore";
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
-import { animateEntrance, type EntranceType } from "@lib/fabric/animation";
+import { animateEntrance, animateExit, type EntranceType, type ExitType } from "@lib/fabric/animation";
 import { ensureObjectId } from "@lib/fabric/objectId";
+import { isExitAnimation } from "@lib/fabric/slidePlayback";
 import type { ElementAnimation, ElementAnimationType } from "@shared/types/slide";
 
 import { RibbonGroup, RibbonDivider, RibbonBigButton } from "./ribbonPrimitives";
 
 type AnimChoice = "none" | EntranceType;
+type ExitChoice = "none" | ExitType;
 
 const ANIMATION_DURATION_MS = 600;
 
@@ -21,6 +23,15 @@ const ANIMATIONS: { type: AnimChoice; label: string; icon: React.ReactNode }[] =
   { type: "fly-in-left", label: "スライドイン", icon: <ArrowRightToLine /> },
   { type: "zoom-in", label: "ズームイン", icon: <ZoomIn /> },
   { type: "bounce", label: "バウンス", icon: <ArrowDownToLine /> },
+];
+
+// Exit ("Out") motions. Symmetric to ANIMATIONS but for退場. There is no exit
+// counterpart for bounce, so the set is fade / slide / zoom only.
+const EXIT_ANIMATIONS: { type: ExitChoice; label: string; icon: React.ReactNode }[] = [
+  { type: "none", label: "なし", icon: <Square /> },
+  { type: "fade-out", label: "フェードアウト", icon: <Sparkles /> },
+  { type: "fly-out-left", label: "スライドアウト", icon: <ArrowLeftToLine /> },
+  { type: "zoom-out", label: "ズームアウト", icon: <ZoomOut /> },
 ];
 
 // Map the preview-level entrance to the persisted model animation type. Each
@@ -37,23 +48,42 @@ export function toModelAnimation(t: EntranceType): ElementAnimationType {
 
 // Reverse mapping: restore the UI selection from a persisted model animation
 // type so the tab reflects what is already applied to the selected object.
-// The "Out" variants reuse the matching entrance choice because the editor
-// only ever writes the "In" variants (see playback in slidePlayback.ts).
+// Only entrance ("In") + bounce types produce an entrance selection; exit
+// ("Out") types are authored separately (see fromModelExit) and return "none"
+// here so the entrance picker is not falsely highlighted.
 export function fromModelAnimation(t: ElementAnimationType | undefined): AnimChoice {
   switch (t) {
     case "fadeIn":
-    case "fadeOut":
       return "fade-in";
     case "slideIn":
-    case "slideOut":
       return "fly-in-left";
     case "zoomIn":
-    case "zoomOut":
       return "zoom-in";
     case "bounce":
       return "bounce";
     default:
       return "none";
+  }
+}
+
+// Map the preview-level exit choice to the persisted model animation type.
+// Symmetric counterpart of toModelAnimation for退場.
+export function toModelExit(t: ExitType): ElementAnimationType {
+  switch (t) {
+    case "fade-out": return "fadeOut";
+    case "fly-out-left": return "slideOut";
+    case "zoom-out": return "zoomOut";
+  }
+}
+
+// Restore the exit-picker selection from a persisted model animation type.
+// Entrance / bounce types are not exits, so they map to "none".
+export function fromModelExit(t: ElementAnimationType | undefined): ExitChoice {
+  switch (t) {
+    case "fadeOut": return "fade-out";
+    case "slideOut": return "fly-out-left";
+    case "zoomOut": return "zoom-out";
+    default: return "none";
   }
 }
 
@@ -64,26 +94,50 @@ function targetIdFor(_canvas: NonNullable<ReturnType<typeof useEditorStore.getSt
   return ensureObjectId(obj as Parameters<typeof ensureObjectId>[0]);
 }
 
+/** Which animation slot of an element an authoring edit targets. */
+export type AnimationSlot = "entrance" | "exit";
+
+// True when an animation belongs to the given slot. An element may hold one
+// entrance and one exit; slot matching keeps the two independent so authoring
+// an exit never clobbers the entrance (and vice-versa).
+function inSlot(a: ElementAnimation, slot: AnimationSlot): boolean {
+  return slot === "exit" ? isExitAnimation(a.type) : !isExitAnimation(a.type);
+}
+
 /**
- * Replace (or insert) the animation for `targetId` in `existing`, merging the
- * given patch onto it. Order/delay authoring edits go through here so the rest
- * of the list is preserved and the target keeps a single animation. A fresh
- * animation defaults to a fade-in entrance at the end of the play order.
+ * Replace (or insert) the animation occupying `slot` for `targetId`, merging the
+ * given patch onto it. The other slot of the same target and every other target
+ * are preserved untouched. A fresh entrance defaults to fade-in; a fresh exit
+ * to fade-out. New animations are appended at the end of the play order.
  */
 export function upsertAnimation(
   existing: ElementAnimation[],
   targetId: string,
   patch: Partial<Omit<ElementAnimation, "targetId">>,
+  slot: AnimationSlot = "entrance",
 ): ElementAnimation[] {
-  const others = existing.filter((a) => a.targetId !== targetId);
-  const current = existing.find((a) => a.targetId === targetId);
+  // Keep everything except the one animation in this target's slot.
+  const others = existing.filter((a) => !(a.targetId === targetId && inSlot(a, slot)));
+  const current = existing.find((a) => a.targetId === targetId && inSlot(a, slot));
   const base: ElementAnimation = current ?? {
     targetId,
-    type: "fadeIn",
-    order: others.length,
+    type: slot === "exit" ? "fadeOut" : "fadeIn",
+    order: existing.length,
     durationMs: ANIMATION_DURATION_MS,
   };
   return [...others, { ...base, ...patch, targetId }];
+}
+
+/**
+ * Remove the animation occupying `slot` for `targetId` (used when the user picks
+ * "なし"). Other slots / targets are left untouched.
+ */
+export function removeAnimation(
+  existing: ElementAnimation[],
+  targetId: string,
+  slot: AnimationSlot,
+): ElementAnimation[] {
+  return existing.filter((a) => !(a.targetId === targetId && inSlot(a, slot)));
 }
 
 export function AnimationTab() {
@@ -91,28 +145,29 @@ export function AnimationTab() {
   const { slides, updateSlideMeta } = useSlideStore();
   const { accessToken } = useAuthStore();
   const [selected, setSelected] = useState<AnimChoice>("none");
+  const [exit, setExit] = useState<ExitChoice>("none");
   const [delayMs, setDelayMs] = useState(0);
   const [order, setOrder] = useState(0);
+  const [exitDelayMs, setExitDelayMs] = useState(0);
+  const [exitOrder, setExitOrder] = useState(0);
 
-  // Reflect the saved animation of whatever object is currently selected, the
-  // same way TransitionTab reflects the active slide's transition. Without this
-  // the tab always showed "none" even when the object already had an animation.
+  // Reflect the saved entrance + exit animations of whatever object is currently
+  // selected, the same way TransitionTab reflects the active slide's transition.
+  // Entrance and exit are independent slots, so each is looked up separately.
   useEffect(() => {
     if (!canvas) return;
     const sync = () => {
       const obj = canvas.getActiveObject();
-      if (!obj) {
-        setSelected("none");
-        setDelayMs(0);
-        setOrder(0);
-        return;
-      }
-      const id = (obj as { id?: string }).id;
+      const id = obj ? (obj as { id?: string }).id : undefined;
       const anims = slides.find((s) => s.id === activeSlideId)?.animations ?? [];
-      const match = id ? anims.find((a) => a.targetId === id) : undefined;
-      setSelected(fromModelAnimation(match?.type));
-      setDelayMs(match?.delayMs ?? 0);
-      setOrder(match?.order ?? 0);
+      const enter = id ? anims.find((a) => a.targetId === id && !isExitAnimation(a.type)) : undefined;
+      const leave = id ? anims.find((a) => a.targetId === id && isExitAnimation(a.type)) : undefined;
+      setSelected(fromModelAnimation(enter?.type));
+      setDelayMs(enter?.delayMs ?? 0);
+      setOrder(enter?.order ?? 0);
+      setExit(fromModelExit(leave?.type));
+      setExitDelayMs(leave?.delayMs ?? 0);
+      setExitOrder(leave?.order ?? 0);
     };
     sync();
     canvas.on("selection:created", sync);
@@ -142,40 +197,69 @@ export function AnimationTab() {
     return targetIdFor(canvas, obj);
   }
 
-  async function apply(type: AnimChoice) {
-    setSelected(type);
-    if (type === "none" || !canvas) return;
-    const obj = canvas.getActiveObject();
-    if (!obj) return;
-    void animateEntrance(canvas, obj, type);
-
-    const targetId = activeTargetId();
-    if (targetId === null) return;
-    const existing = slides.find((s) => s.id === activeSlideId)?.animations ?? [];
-    await persist(upsertAnimation(existing, targetId, { type: toModelAnimation(type) }));
+  function existingAnimations(): ElementAnimation[] {
+    return slides.find((s) => s.id === activeSlideId)?.animations ?? [];
   }
 
-  // Update the timing (delay / play order) of the selected object's animation.
-  // Only meaningful once an animation exists; upsert seeds a fade-in otherwise
-  // so timing can be authored before picking a motion.
-  async function patchTiming(patch: { delayMs?: number; order?: number }) {
-    if (patch.delayMs !== undefined) setDelayMs(patch.delayMs);
-    if (patch.order !== undefined) setOrder(patch.order);
+  async function apply(type: AnimChoice) {
+    setSelected(type);
     const targetId = activeTargetId();
     if (targetId === null) return;
-    const existing = slides.find((s) => s.id === activeSlideId)?.animations ?? [];
-    await persist(upsertAnimation(existing, targetId, patch));
+    const existing = existingAnimations();
+    if (type === "none") {
+      await persist(removeAnimation(existing, targetId, "entrance"));
+      return;
+    }
+    if (canvas) {
+      const obj = canvas.getActiveObject();
+      if (obj) void animateEntrance(canvas, obj, type);
+    }
+    await persist(upsertAnimation(existing, targetId, { type: toModelAnimation(type) }, "entrance"));
+  }
+
+  async function applyExit(type: ExitChoice) {
+    setExit(type);
+    const targetId = activeTargetId();
+    if (targetId === null) return;
+    const existing = existingAnimations();
+    if (type === "none") {
+      await persist(removeAnimation(existing, targetId, "exit"));
+      return;
+    }
+    if (canvas) {
+      const obj = canvas.getActiveObject();
+      if (obj) void animateExit(canvas, obj, type);
+    }
+    await persist(upsertAnimation(existing, targetId, { type: toModelExit(type) }, "exit"));
+  }
+
+  // Update the timing (delay / play order) of the selected object's animation in
+  // the given slot. upsert seeds a default motion if none exists yet so timing
+  // can be authored before picking a motion.
+  async function patchTiming(slot: AnimationSlot, patch: { delayMs?: number; order?: number }) {
+    if (slot === "entrance") {
+      if (patch.delayMs !== undefined) setDelayMs(patch.delayMs);
+      if (patch.order !== undefined) setOrder(patch.order);
+    } else {
+      if (patch.delayMs !== undefined) setExitDelayMs(patch.delayMs);
+      if (patch.order !== undefined) setExitOrder(patch.order);
+    }
+    const targetId = activeTargetId();
+    if (targetId === null) return;
+    await persist(upsertAnimation(existingAnimations(), targetId, patch, slot));
   }
 
   function preview() {
-    if (selected === "none" || !canvas) return;
+    if (!canvas) return;
     const obj = canvas.getActiveObject();
-    if (obj) void animateEntrance(canvas, obj, selected);
+    if (!obj) return;
+    if (selected !== "none") void animateEntrance(canvas, obj, selected);
+    if (exit !== "none") void animateExit(canvas, obj, exit);
   }
 
   return (
     <div className="flex h-full items-stretch">
-      <RibbonGroup label="アニメーション">
+      <RibbonGroup label="開始（入場）">
         <div className="flex items-center gap-0.5">
           {ANIMATIONS.map((a) => (
             <RibbonBigButton
@@ -192,18 +276,35 @@ export function AnimationTab() {
       </RibbonGroup>
       <RibbonDivider />
 
+      <RibbonGroup label="終了（退場）">
+        <div className="flex items-center gap-0.5">
+          {EXIT_ANIMATIONS.map((a) => (
+            <RibbonBigButton
+              key={a.type}
+              icon={a.icon}
+              label={a.label}
+              active={exit === a.type}
+              onClick={() => void applyExit(a.type)}
+              disabled={!canvas}
+              title={`${a.label} — 選択中のオブジェクトに適用（スライド切替時に再生）`}
+            />
+          ))}
+        </div>
+      </RibbonGroup>
+      <RibbonDivider />
+
       <RibbonGroup label="プレビュー">
         <RibbonBigButton
           icon={<Play />}
           label="プレビュー"
           onClick={preview}
-          disabled={!canvas || selected === "none"}
-          title="選択したアニメーションを再生"
+          disabled={!canvas || (selected === "none" && exit === "none")}
+          title="選択した入場・退場アニメーションを再生"
         />
       </RibbonGroup>
       <RibbonDivider />
 
-      <RibbonGroup label="タイミング">
+      <RibbonGroup label="入場タイミング">
         <div className="flex items-center gap-3 px-1">
           <TimingField
             label="遅延 (ms)"
@@ -211,7 +312,7 @@ export function AnimationTab() {
             min={0}
             step={100}
             disabled={!canvas || selected === "none"}
-            onCommit={(v) => void patchTiming({ delayMs: v })}
+            onCommit={(v) => void patchTiming("entrance", { delayMs: v })}
             title="再生開始までの待ち時間（ミリ秒）"
           />
           <TimingField
@@ -220,8 +321,32 @@ export function AnimationTab() {
             min={0}
             step={1}
             disabled={!canvas || selected === "none"}
-            onCommit={(v) => void patchTiming({ order: v })}
+            onCommit={(v) => void patchTiming("entrance", { order: v })}
             title="スライド内での再生順（小さいほど先に再生）"
+          />
+        </div>
+      </RibbonGroup>
+      <RibbonDivider />
+
+      <RibbonGroup label="退場タイミング">
+        <div className="flex items-center gap-3 px-1">
+          <TimingField
+            label="遅延 (ms)"
+            value={exitDelayMs}
+            min={0}
+            step={100}
+            disabled={!canvas || exit === "none"}
+            onCommit={(v) => void patchTiming("exit", { delayMs: v })}
+            title="退場再生開始までの待ち時間（ミリ秒）"
+          />
+          <TimingField
+            label="順序"
+            value={exitOrder}
+            min={0}
+            step={1}
+            disabled={!canvas || exit === "none"}
+            onCommit={(v) => void patchTiming("exit", { order: v })}
+            title="退場の再生順（小さいほど先に再生）"
           />
         </div>
       </RibbonGroup>
