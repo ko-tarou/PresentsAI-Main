@@ -4,7 +4,7 @@ import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { slidesApi } from "@shared/api/slides";
 import { createCanvas, loadFromJSON, SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 import { playTransition } from "@lib/fabric/animation";
-import { modelTransitionToPreview, playSlideAnimations } from "@lib/fabric/slidePlayback";
+import { modelTransitionToPreview, playSlideAnimations, playSlideExitAnimations, isExitAnimation } from "@lib/fabric/slidePlayback";
 import { PresenterSocket, type ViewerStatus } from "@lib/realtime/presenter";
 import type { Slide } from "@shared/types/slide";
 
@@ -20,6 +20,10 @@ export default function PresentPage({ params }: { params: Promise<{ id: string }
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const presenterRef = useRef<PresenterSocket | null>(null);
+  // The slide currently shown on the canvas. Used so that when `cur` changes we
+  // can play the outgoing slide's exit ("Out") animations before swapping in
+  // the next slide's content.
+  const shownSlideRef = useRef<Slide | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -34,15 +38,27 @@ export default function PresentPage({ params }: { params: Promise<{ id: string }
     if (!canvasRef.current || !slide) return;
     const c = createCanvas(canvasRef.current, { width: SLIDE_WIDTH / 2, height: SLIDE_HEIGHT / 2 });
     let cancelled = false;
-    // Play the saved slide-level transition, then the per-element entrance
-    // animations once the content is loaded. Guarded so an unmount mid-play
-    // does not touch a disposed canvas.
+    // If we're moving away from a slide that had exit ("Out") animations, render
+    // that outgoing slide on the fresh canvas and play its exits first, so the
+    // audience sees the elements leave before the next slide loads. Then play the
+    // slide-level transition, load the new content, and play its entrances.
+    // Guarded so an unmount mid-play does not touch a disposed canvas.
     (async () => {
+      const outgoing = shownSlideRef.current;
+      const hasExit = outgoing?.animations?.some((a) => isExitAnimation(a.type));
+      if (outgoing && outgoing.id !== slide.id && hasExit) {
+        await loadFromJSON(c, outgoing.content);
+        if (cancelled) return;
+        await playSlideExitAnimations(c, outgoing.animations);
+      }
+      if (cancelled) return;
       if (stageRef.current) {
         await playTransition(stageRef.current, modelTransitionToPreview(slide.transition?.type), slide.transition?.durationMs);
       }
       await loadFromJSON(c, slide.content);
-      if (!cancelled) await playSlideAnimations(c, slide.animations);
+      if (cancelled) return;
+      shownSlideRef.current = slide;
+      await playSlideAnimations(c, slide.animations);
     })();
     return () => { cancelled = true; c.dispose(); };
   }, [cur, slides]);
