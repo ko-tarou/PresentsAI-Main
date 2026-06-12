@@ -28,6 +28,15 @@ export function SlidePanel() {
     setActiveSlide(slides[i].id);
   }
 
+  // Select a slide we just appended. We can't reuse handleSelect(slides.length)
+  // here because `slides` is the render-time snapshot — addSlide updates the
+  // store but this closure still sees the pre-add array, so slides[slides.length]
+  // is undefined and reading `.id` throws. Select by the created id directly.
+  function selectAppended(slideId: string) {
+    setCurrentIndex(slides.length);
+    setActiveSlide(slideId);
+  }
+
   async function handleAdd() {
     if (!accessToken || !presentationId || adding) return;
     setAdding(true);
@@ -36,7 +45,7 @@ export function SlidePanel() {
       addSlide(s as Slide);
       // Mirror the new slide into the shared doc so peers see it too.
       structure.addSlide((s as Slide).id);
-      handleSelect(slides.length);
+      selectAppended((s as Slide).id);
     } finally { setAdding(false); }
   }
 
@@ -51,7 +60,7 @@ export function SlidePanel() {
       // Mirror the duplicated slide into the shared doc; its objects sync via
       // the per-slide ObjectBinding / projection autosave.
       structure.addSlide(created.id);
-      handleSelect(slides.length);
+      selectAppended(created.id);
     } finally { setAdding(false); }
   }
 
