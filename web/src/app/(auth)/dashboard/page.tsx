@@ -9,6 +9,7 @@ import {
 import { useAuthStore } from "@features/dashboard/stores/authStore";
 import { presentationsApi, type Presentation as PresentationType } from "@shared/api/presentations";
 import { ShareButton } from "@features/dashboard/components/ShareButton";
+import { ImportPptxButton } from "@features/dashboard/components/ImportPptxButton";
 import { Button } from "@shared/components/ui/Button";
 import { Avatar } from "@shared/components/ui/Avatar";
 
@@ -105,10 +106,13 @@ export default function DashboardPage() {
               {presentations.length} 件のプレゼンテーション
             </p>
           </div>
-          <Button variant="primary" size="md" onClick={handleCreate} loading={creating}>
-            <Plus className="h-4 w-4" />
-            新規作成
-          </Button>
+          <div className="flex items-center gap-2">
+            <ImportPptxButton />
+            <Button variant="primary" size="md" onClick={handleCreate} loading={creating}>
+              <Plus className="h-4 w-4" />
+              新規作成
+            </Button>
+          </div>
         </div>
 
         {/* Search + sort bar */}
