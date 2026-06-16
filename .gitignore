@@ -49,6 +49,7 @@ services/assets/assets
 # Frontend
 web/.next/
 web/node_modules/
+web/coverage/
 
 # Uploads
 uploads/
