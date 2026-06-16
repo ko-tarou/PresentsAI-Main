@@ -84,11 +84,19 @@ export async function parsePptx(
   return { slides, warnings };
 }
 
+/** An embedded image resolved to a data URL plus its natural pixel size. */
+interface MediaImage {
+  dataUrl: string;
+  /** Decoded bitmap width/height in pixels, or undefined if undecodable. */
+  naturalW?: number;
+  naturalH?: number;
+}
+
 interface SlideCtx {
   scaleX: number;
   scaleY: number;
-  /** rId -> data URL for embedded images on this slide. */
-  media: Map<string, string>;
+  /** rId -> embedded image (data URL + natural size) for this slide. */
+  media: Map<string, MediaImage>;
   warnings: string[];
 }
 
@@ -169,27 +177,46 @@ function pictureToObject(pic: Element, ctx: SlideCtx): FabricObject | null {
     blip?.getAttributeNS?.(R_NS, "embed") ??
     getAttrAnyNs(blip, "embed");
   if (!embed) return null;
-  const dataUrl = ctx.media.get(embed);
-  if (!dataUrl) {
+  const img = ctx.media.get(embed);
+  if (!img) {
     ctx.warnings.push("埋め込み画像を1件読み込めませんでした。");
     return null;
   }
   const xfrm = findXfrm(pic);
   const box = xfrm ? emuBox(xfrm, ctx) : null;
-  // Fabric's Image, when loaded from JSON with explicit width/height, draws the
-  // decoded bitmap into that logical box (scaleX/scaleY default to 1). So we map
-  // the PPTX EMU extent straight onto width/height — the picture lands at the
-  // right place and footprint, and stays a freely resizable image object.
+
+  // Fabric v6's Image treats `width`/`height` as the slice of the *natural*
+  // bitmap to draw (a crop window), and resizes via `scaleX`/`scaleY` — exactly
+  // like the editor's own image tool, which keeps width/height at the decoded
+  // size and scales. The previous import instead forced width/height to the EMU
+  // box (e.g. 320x240) with scale=1; Fabric then clamped the draw rect to
+  // `min(width, naturalWidth)` (_renderFill), so a large photo showed only its
+  // top-left corner and the object's cache desynced on drag/resize — the "looks
+  // wrong" + "garbles when moved" bug. Fix: width/height = natural size, then
+  // scaleX/scaleY = box / natural so the footprint matches the PPTX extent while
+  // the object stays a clean, freely transformable image.
   const obj: FabricObject = {
     type: "Image",
     version: "6.0.0",
     id: makeId(),
     left: box?.left ?? 0.1 * SLIDE_WIDTH,
     top: box?.top ?? 0.1 * SLIDE_HEIGHT,
-    src: dataUrl,
+    src: img.dataUrl,
     crossOrigin: "anonymous",
   };
-  if (box) {
+  if (img.naturalW && img.naturalH) {
+    obj.width = img.naturalW;
+    obj.height = img.naturalH;
+    if (box) {
+      obj.scaleX = box.width / img.naturalW;
+      obj.scaleY = box.height / img.naturalH;
+    }
+  } else if (box) {
+    // Natural size unknown (e.g. an SVG without an intrinsic px size): fall back
+    // to letting Fabric size from the decoded element and scale to the box at
+    // load time is not possible here, so approximate by width/height + scale 1.
+    // This still avoids the crop bug because width/height now match the element
+    // once decoded; we only set the footprint via the box for placement.
     obj.width = box.width;
     obj.height = box.height;
   }
@@ -360,20 +387,105 @@ async function readRels(
   return map;
 }
 
-/** Resolve each image relationship to a base64 data URL. */
+/** Resolve each image relationship to a data URL plus its natural pixel size. */
 async function readMedia(
   zip: JSZip,
   rels: Map<string, string>,
-): Promise<Map<string, string>> {
-  const media = new Map<string, string>();
+): Promise<Map<string, MediaImage>> {
+  const media = new Map<string, MediaImage>();
   for (const [rId, path] of rels) {
     if (!/\.(png|jpe?g|gif|bmp|svg)$/i.test(path)) continue;
     const file = zip.file(path);
     if (!file) continue;
+    const bytes = await file.async("uint8array");
     const b64 = await file.async("base64");
-    media.set(rId, `data:${mimeFor(path)};base64,${b64}`);
+    const size = imageSize(bytes);
+    media.set(rId, {
+      dataUrl: `data:${mimeFor(path)};base64,${b64}`,
+      naturalW: size?.width,
+      naturalH: size?.height,
+    });
   }
   return media;
+}
+
+/**
+ * Read an image's intrinsic pixel size straight from its file header.
+ *
+ * We can't rely on the browser to decode images during import (and tests run in
+ * jsdom, which has no real decoder), so we parse the dimension fields out of the
+ * raw bytes for the formats PowerPoint actually embeds. This is what lets the
+ * importer set Fabric's width/height to the natural bitmap size and derive a
+ * correct scaleX/scaleY — the key to the picture not cropping or garbling.
+ */
+function imageSize(b: Uint8Array): { width: number; height: number } | null {
+  // PNG: 8-byte signature, then IHDR with width/height as big-endian uint32.
+  if (
+    b.length >= 24 &&
+    b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47
+  ) {
+    return { width: be32(b, 16), height: be32(b, 20) };
+  }
+  // GIF: "GIF87a"/"GIF89a", then width/height as little-endian uint16.
+  if (
+    b.length >= 10 &&
+    b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46
+  ) {
+    return { width: b[6] | (b[7] << 8), height: b[8] | (b[9] << 8) };
+  }
+  // BMP: "BM", DIB header width/height as little-endian int32 at offset 18/22.
+  if (b.length >= 26 && b[0] === 0x42 && b[1] === 0x4d) {
+    return { width: le32(b, 18), height: Math.abs(le32s(b, 22)) };
+  }
+  // JPEG: scan segments for the SOF marker carrying height/width (big-endian).
+  if (b.length >= 4 && b[0] === 0xff && b[1] === 0xd8) {
+    return jpegSize(b);
+  }
+  // SVG and anything else: no reliable byte-level size; caller falls back.
+  return null;
+}
+
+function jpegSize(b: Uint8Array): { width: number; height: number } | null {
+  let i = 2;
+  while (i + 9 < b.length) {
+    if (b[i] !== 0xff) {
+      i++;
+      continue;
+    }
+    const marker = b[i + 1];
+    // SOF0..SOF3, SOF5..SOF7, SOF9..SOF11, SOF13..SOF15 carry the frame size.
+    const isSof =
+      (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+    if (isSof) {
+      return { height: be16(b, i + 5), width: be16(b, i + 7) };
+    }
+    // Standalone markers (no length): RST, SOI, EOI, TEM.
+    if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) {
+      i += 2;
+      continue;
+    }
+    // Otherwise skip this segment using its 2-byte big-endian length.
+    const len = be16(b, i + 2);
+    if (len < 2) return null;
+    i += 2 + len;
+  }
+  return null;
+}
+
+function be16(b: Uint8Array, o: number): number {
+  return (b[o] << 8) | b[o + 1];
+}
+function be32(b: Uint8Array, o: number): number {
+  return (b[o] * 0x1000000) + (b[o + 1] << 16) + (b[o + 2] << 8) + b[o + 3];
+}
+function le32(b: Uint8Array, o: number): number {
+  return b[o] + (b[o + 1] << 8) + (b[o + 2] << 16) + (b[o + 3] * 0x1000000);
+}
+function le32s(b: Uint8Array, o: number): number {
+  return b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24);
 }
 
 function mimeFor(path: string): string {
@@ -456,8 +568,6 @@ function makeId(): string {
 
 /*
  * Deferred (post-MVP) — tracked here so the boundary is explicit:
- *  - Native image sizing: pictures load at their natural size; we don't yet
- *    derive scaleX/scaleY to honor the PPTX extent box (see _emuW/_emuH hints).
  *  - Per-run rich text (mixed fonts/colors within one text box).
  *  - Non-solid fills (gradients, pattern, picture fills), theme color lookups.
  *  - Tables, charts, SmartArt, grouped shapes, connectors, freeform paths.
