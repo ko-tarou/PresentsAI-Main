@@ -14,6 +14,18 @@ export default defineConfig({
       reporter: ["text", "html"],
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.{test,spec}.{ts,tsx}", "src/**/*.d.ts"],
+      // Ratchet floor: thresholds are set just below the current measured
+      // coverage so CI fails on any regression but does not break the build
+      // today. The codebase is still mostly untested React UI (pages/panels),
+      // so the 60% line target from the quality plan is reached by raising
+      // these numbers incrementally as tests are added. Do NOT lower them;
+      // only raise.
+      thresholds: {
+        lines: 20,
+        statements: 20,
+        functions: 50,
+        branches: 65,
+      },
     },
   },
   resolve: {
