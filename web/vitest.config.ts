@@ -21,10 +21,10 @@ export default defineConfig({
       // these numbers incrementally as tests are added. Do NOT lower them;
       // only raise.
       thresholds: {
-        lines: 20,
-        statements: 20,
-        functions: 50,
-        branches: 65,
+        lines: 22,
+        statements: 22,
+        functions: 52,
+        branches: 70,
       },
     },
   },
