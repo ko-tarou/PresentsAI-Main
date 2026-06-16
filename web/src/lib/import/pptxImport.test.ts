@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import JSZip from "jszip";
+import pptxgen from "pptxgenjs";
 import { parsePptx } from "./pptxImport";
 import { SLIDE_WIDTH, SLIDE_HEIGHT } from "@lib/fabric/canvas";
 
@@ -132,13 +133,92 @@ describe("parsePptx", () => {
     // off x=6096000 -> 50% of width, y=3429000 -> 50% of height.
     expect(image!.left).toBeCloseTo(SLIDE_WIDTH * 0.5, 1);
     expect(image!.top).toBeCloseTo(SLIDE_HEIGHT * 0.5, 1);
-    // ext 3048000 -> 25% width, 2286000 -> ~33% height.
-    expect(image!.width).toBeCloseTo(SLIDE_WIDTH * 0.25, 1);
+
+    // The fixture PNG is 1x1, so Fabric width/height must be the *natural* size
+    // (1px) — NOT the EMU box. Forcing width/height to the box made Fabric treat
+    // them as a crop window into the bitmap, which is what cropped the picture
+    // and corrupted it on drag/resize. The footprint is carried by scaleX/scaleY.
+    expect(image!.width).toBe(1);
+    expect(image!.height).toBe(1);
+
+    // ext 3048000 -> 25% of SLIDE_WIDTH, 2286000 -> ~33% of SLIDE_HEIGHT.
+    // With a 1px natural image, scale == that pixel footprint.
+    const footprintW = (image!.scaleX as number) * (image!.width as number);
+    const footprintH = (image!.scaleY as number) * (image!.height as number);
+    expect(footprintW).toBeCloseTo(SLIDE_WIDTH * 0.25, 1);
+    expect(footprintH).toBeCloseTo(SLIDE_HEIGHT * (2286000 / SLIDE_H_EMU), 1);
+  });
+
+  // Regression guard for the "moves -> garbles" bug: every imported object must
+  // carry geometry that stays self-consistent under Fabric transforms. Images in
+  // particular must have width/height = natural bitmap size with a finite, >0
+  // scale, never width/height pinned to the layout box (which made Fabric crop).
+  it("gives every imported object move/resize-safe geometry", async () => {
+    const { slides } = await parsePptx(await buildPptx(), xmlParser);
+    const objs = slides[0].objects as Array<Record<string, unknown>>;
+
+    for (const o of objs) {
+      // No NaN / non-finite coordinates that would explode on drag.
+      for (const k of ["left", "top", "width", "height", "scaleX", "scaleY"]) {
+        if (o[k] !== undefined) {
+          expect(Number.isFinite(o[k] as number)).toBe(true);
+        }
+      }
+      if (o.type === "Image") {
+        // Natural-size width/height + positive scale == clean transform target.
+        expect(o.width as number).toBeGreaterThan(0);
+        expect(o.height as number).toBeGreaterThan(0);
+        expect(o.scaleX as number).toBeGreaterThan(0);
+        expect(o.scaleY as number).toBeGreaterThan(0);
+      }
+    }
   });
 
   it("reads the slide solid-fill background", async () => {
     const { slides } = await parsePptx(await buildPptx(), xmlParser);
     expect(slides[0].background).toBe("#eef2ff");
+  });
+
+  // Regression: the hand-written fixtures above are far simpler than what real
+  // tools emit. PowerPoint/Keynote/pptxgenjs decks carry extra wrapper elements
+  // (p:nvGrpSpPr, p:grpSpPr, a:endParaRPr, a:lstStyle, prstGeom, ...) and put the
+  // run color/format inside richer trees. This builds a deck with the actual
+  // pptxgenjs serializer so the walker is exercised against real-world structure
+  // — text, a solid-fill shape, an embedded image, and a slide background.
+  it("parses a real pptxgenjs-generated deck (text + shape + image + bg)", async () => {
+    const pres = new pptxgen();
+    const s1 = pres.addSlide();
+    s1.addText("Real Title", {
+      x: 1, y: 1, w: 8, h: 1.5, fontSize: 40, bold: true, color: "FF0000", align: "center",
+    });
+    s1.addText("Body line", { x: 1, y: 3, w: 8, h: 1, fontSize: 20 });
+    const s2 = pres.addSlide();
+    s2.background = { color: "EEF2FF" };
+    s2.addShape(pres.ShapeType.rect, { x: 5, y: 4, w: 2, h: 1, fill: { color: "00AA88" } });
+    const png =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    s2.addImage({ data: `data:image/png;base64,${png}`, x: 1, y: 1, w: 2, h: 2 });
+
+    const buf = (await pres.write({ outputType: "arraybuffer" })) as ArrayBuffer;
+    const { slides, warnings } = await parsePptx(buf, xmlParser);
+
+    expect(slides).toHaveLength(2);
+    expect(warnings).toEqual([]);
+
+    const s1objs = slides[0].objects as Array<Record<string, unknown>>;
+    const title = s1objs.find((o) => o.text === "Real Title");
+    expect(title).toBeTruthy();
+    expect(title!.type).toBe("Textbox");
+    expect(title!.fontWeight).toBe("bold");
+    expect(title!.textAlign).toBe("center");
+    expect(title!.fill).toBe("#ff0000");
+
+    const s2objs = slides[1].objects as Array<Record<string, unknown>>;
+    expect(slides[1].background).toBe("#eef2ff");
+    expect(s2objs.some((o) => o.type === "Image")).toBe(true);
+    const rect = s2objs.find((o) => o.type === "Rect");
+    expect(rect).toBeTruthy();
+    expect(rect!.fill).toBe("#00aa88");
   });
 
   it("warns and returns empty when there are no slides", async () => {

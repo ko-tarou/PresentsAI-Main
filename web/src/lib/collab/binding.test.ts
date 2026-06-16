@@ -16,6 +16,17 @@ vi.mock("y-websocket", () => ({ WebsocketProvider: vi.fn() }));
  * also wires its own mutation events back through an attached ObjectBinding —
  * exactly like the real canvas — so loop-prevention is genuinely exercised.
  */
+/** A live "fabric object" the fake hands to object:* callbacks. Like a real
+ *  FabricObject it carries a `toObject()` serializer; the JSON it produces does
+ *  NOT — so calling toObject() twice (the double-serialize bug) blows up here
+ *  exactly as it does with the real adapter. */
+interface FakeFabricObject {
+  toObject(): ObjectJSON;
+}
+function liveObject(json: ObjectJSON): FakeFabricObject {
+  return { toObject: () => ({ ...json }) };
+}
+
 class FakeCanvas implements CanvasLike {
   objects: ObjectJSON[] = [];
   renders = 0;
@@ -24,13 +35,20 @@ class FakeCanvas implements CanvasLike {
   getObjects(): ObjectJSON[] {
     return [...this.objects];
   }
+  // Mirror FabricCanvasAdapter: only a *live* object (with toObject) is
+  // serializable. Passing plain JSON here is the bug we must surface, not hide.
   toObject(obj: ObjectJSON): ObjectJSON {
-    return { ...obj };
+    const live = obj as unknown as Partial<FakeFabricObject>;
+    if (typeof live.toObject !== "function") {
+      throw new TypeError("o.toObject is not a function");
+    }
+    return live.toObject!();
   }
   addObject(json: ObjectJSON): void {
     this.objects.push({ ...json });
-    // Real fabric fires object:added on add — route it back like the hook does.
-    this.binding?.onObjectAdded({ ...json });
+    // Real fabric fires object:added on add — route it back like the hook does:
+    // the binding receives the *live* object and serializes it itself (once).
+    this.binding?.onObjectAdded(liveObject(json) as unknown as ObjectJSON);
   }
   removeObject(id: string): void {
     const before = this.objects.length;
@@ -41,7 +59,7 @@ class FakeCanvas implements CanvasLike {
     const o = this.objects.find((x) => x.id === id);
     if (!o) return;
     Object.assign(o, patch);
-    this.binding?.onObjectModified(o as ObjectJSON);
+    this.binding?.onObjectModified(liveObject(o) as unknown as ObjectJSON);
   }
   requestRender(): void {
     this.renders++;
@@ -50,12 +68,12 @@ class FakeCanvas implements CanvasLike {
   /** Simulate a *user* edit: mutate locally and notify the binding. */
   userAdd(json: ObjectJSON): void {
     this.objects.push({ ...json });
-    this.binding?.onObjectAdded(json);
+    this.binding?.onObjectAdded(liveObject(json) as unknown as ObjectJSON);
   }
   userModify(id: string, patch: Record<string, unknown>): void {
     const o = this.objects.find((x) => x.id === id)!;
     Object.assign(o, patch);
-    this.binding?.onObjectModified(o);
+    this.binding?.onObjectModified(liveObject(o) as unknown as ObjectJSON);
   }
   userRemove(id: string): void {
     this.objects = this.objects.filter((o) => o.id !== id);
