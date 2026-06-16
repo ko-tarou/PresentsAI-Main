@@ -1,11 +1,7 @@
 FROM node:22-alpine
 WORKDIR /app
 COPY package.json package-lock.json* ./
-# Skip optional deps in the image: `canvas` is an optional native dep used only
-# by the Vitest test backend (CI runs that on glibc with a prebuilt binary). On
-# this Alpine/musl image there is no prebuild, so it would try to compile and
-# fail — the dev server never needs it, so omit it.
-RUN npm ci --legacy-peer-deps --no-optional
+RUN npm ci --legacy-peer-deps
 COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
