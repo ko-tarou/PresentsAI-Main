@@ -89,6 +89,20 @@ jobs:
             if [ "$code" = "200" ]; then echo "web up"; break; fi
             sleep 3
           done
+      - name: Warm up dev-server routes
+        # The web container runs `next dev`, which compiles each route on its
+        # first request. The editor route ships ~515 kB of JS (Fabric.js + Yjs)
+        # and its first compile can take tens of seconds — long enough to blow
+        # the Playwright per-action timeout and make the editor specs flaky.
+        # Pre-compile the heavy routes here so the test window never pays that
+        # one-time cost. Auth is client-side, so an unauthenticated GET still
+        # forces the route bundle to compile.
+        run: |
+          for route in /login /dashboard /editor/warmup /present/warmup /view/warmup; do
+            echo "warming $route ..."
+            curl -s -o /dev/null -w "  %{http_code} in %{time_total}s\n" \
+              --max-time 120 "http://localhost$route" || true
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 22
