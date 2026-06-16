@@ -56,10 +56,16 @@ export function useObjectBinding(
     // Seed the canvas from whatever the doc already holds for this slide.
     binding.reconcileToCanvas();
 
+    // Pass the *live* FabricObject straight through. ObjectBinding serializes it
+    // exactly once via `this.canvas.toObject(...)` (see binding.ts). Pre-calling
+    // adapter.toObject here would serialize twice: the second call lands on the
+    // already-plain JSON (which has no `.toObject` method) and throws
+    // "o.toObject is not a function" — the crash seen when reconcileToCanvas
+    // re-adds imported (e.g. PPTX) objects and fires object:added.
     const onAdded = (e: { target?: FabricObject }) =>
-      e.target && binding.onObjectAdded(adapter.toObject(e.target as unknown as ObjectJSON));
+      e.target && binding.onObjectAdded(e.target as unknown as ObjectJSON);
     const onModified = (e: { target?: FabricObject }) =>
-      e.target && binding.onObjectModified(adapter.toObject(e.target as unknown as ObjectJSON));
+      e.target && binding.onObjectModified(e.target as unknown as ObjectJSON);
     const onRemoved = (e: { target?: FabricObject }) => {
       const id = (e.target as (FabricObject & { id?: string }) | undefined)?.id;
       if (id) binding.onObjectRemoved({ id });
