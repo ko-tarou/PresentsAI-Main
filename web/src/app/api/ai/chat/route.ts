@@ -2,7 +2,18 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const GATEWAY_URL = process.env.LLM_GATEWAY_URL ?? "http://localhost:4242";
+// Gateway base URL. The route appends "/v1/chat/completions" itself, so a
+// trailing "/v1" (as shown in the README env example) is stripped to avoid a
+// duplicated "/v1/v1". Any OpenAI-compatible server works (LM Studio :4242,
+// Ollama's OpenAI-compat endpoint http://localhost:11434, etc.).
+const GATEWAY_URL = (process.env.LLM_GATEWAY_URL ?? "http://localhost:4242")
+  .replace(/\/+$/, "")
+  .replace(/\/v1$/, "");
+
+// Model name sent to the gateway. Defaults to LFM2 but is overridable so the
+// same code drives a different local model (e.g. LLM_MODEL=qwen2.5:3b for
+// Ollama, or llama3.2:3b) without touching source.
+const MODEL = process.env.LLM_MODEL ?? "lfm2-2.6b-f16";
 
 interface ChatBody {
   messages: { role: string; content: string }[];
@@ -10,8 +21,6 @@ interface ChatBody {
   temperature?: number;
   response_format?: { type: string };
 }
-
-const MODEL = "lfm2-2.6b-f16";
 
 export async function POST(req: Request) {
   let body: ChatBody;

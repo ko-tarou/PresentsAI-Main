@@ -72,15 +72,38 @@ cd services/realtime && go run ./cmd/realtime  # Realtime WS at :8082
 
 ## AI Features Setup
 
-The AI coaching and content generation require a local LFM2 gateway:
+The AI speaker-notes / content generation feature talks to any local
+**OpenAI-compatible** chat endpoint (`POST /v1/chat/completions`). No external
+API is used. The `/api/ai/chat` route reads two server-side env vars:
+
+- `LLM_GATEWAY_URL` — base URL of the local gateway (the route appends
+  `/v1/chat/completions`; a trailing `/v1` is tolerated). Default
+  `http://localhost:4242`.
+- `LLM_MODEL` — model name sent to the gateway. Default `lfm2-2.6b-f16`.
+
+Option A - Ollama (CLI):
 
 ```bash
-# Start LFM2 gateway on port 4242 (OpenAI-compatible)
-# Example using LM Studio or similar:
-# Set NEXT_PUBLIC_LLM_GATEWAY_URL=http://localhost:4242/v1
-
-# Real-time coaching uses Web Speech API (Chrome/Edge only)
+# One-time (requires user-approved global install):
+brew install ollama
+ollama pull qwen2.5:3b        # ~2 GB; or llama3.2:3b
+ollama serve                  # OpenAI-compatible on :11434
+# Then in web/.env.local:
+#   LLM_GATEWAY_URL=http://localhost:11434
+#   LLM_MODEL=qwen2.5:3b
 ```
+
+Option B - LM Studio (GUI):
+
+```bash
+# Download a model in LM Studio, start its OpenAI-compatible server on :4242.
+# Then in web/.env.local:
+#   LLM_GATEWAY_URL=http://localhost:4242
+#   LLM_MODEL=<the model id LM Studio reports>
+```
+
+Real-time speech coaching uses the Web Speech API (Chrome/Edge only) and is
+independent of the gateway.
 
 ## Environment Variables
 
@@ -95,7 +118,10 @@ PORT=8080
 NEXT_PUBLIC_API_URL=http://localhost:8080
 NEXT_PUBLIC_COLLAB_URL=ws://localhost:8081
 NEXT_PUBLIC_REALTIME_URL=ws://localhost:8082
-NEXT_PUBLIC_LLM_GATEWAY_URL=http://localhost:4242/v1
+
+# AI gateway (server-side; read by /api/ai/chat). OpenAI-compatible endpoint.
+LLM_GATEWAY_URL=http://localhost:4242   # Ollama: http://localhost:11434
+LLM_MODEL=lfm2-2.6b-f16                 # Ollama: qwen2.5:3b
 ```
 
 ## PR History (021-040)
