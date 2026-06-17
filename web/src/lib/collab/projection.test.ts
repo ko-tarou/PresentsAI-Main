@@ -52,6 +52,32 @@ describe("projectDoc (JSONB projection)", () => {
     expect(projectDoc(doc)).toHaveLength(0);
   });
 
+  it("deduplicates slides sharing an id, keeping the first (#132)", () => {
+    // A Y.Array carries no unique-key constraint, so a concurrent seed / merge
+    // can leave two entries with the same slide id. The projection feeds the
+    // React slide list, so it must collapse duplicates or the render crashes
+    // with "two children with the same key". The first occurrence wins.
+    const doc = new Y.Doc();
+    seed(doc);
+    doc.transact(() => {
+      getSlides(doc).push([
+        slideToYMap({
+          id: "s1", // same id as the seeded slide
+          presentationId: "p",
+          position: 1,
+          content: { version: "1.0", objects: [{ id: "dupe", type: "rect" }] },
+          createdAt: "x",
+          updatedAt: "x",
+        }),
+      ]);
+    });
+    expect(getSlides(doc).length).toBe(2); // raw array genuinely has two
+    const out = projectDoc(doc);
+    expect(out).toHaveLength(1); // projection collapses them
+    expect(out[0].id).toBe("s1");
+    expect(out[0].position).toBe(0); // first occurrence wins
+  });
+
   it("survives a persistence round-trip (encode/applyUpdate) intact", () => {
     const docA = new Y.Doc();
     seed(docA);
