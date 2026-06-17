@@ -72,14 +72,29 @@ export function slideToYMap(slide: Slide): YSlideMap {
 }
 
 /**
- * Populates the shared doc from a plain slide list. Runs inside a single
- * transaction so observers see one atomic update. Existing content is replaced.
+ * Seeds the shared doc from a plain slide list, idempotently by slide id.
+ *
+ * This is the baseline-publish path taken by the first client to join an empty
+ * room. It is deliberately *additive and id-keyed*: only slides whose id is not
+ * already present in the doc are pushed. A Y.Array does not dedupe by a logical
+ * key, so if this client seeds a slide while the server's already-persisted copy
+ * of the same slide is still in flight, a naive `push` would land two Y.Map
+ * entries with the same id once the remote update merges in — the source of the
+ * "two children with the same key" duplicate-slide bug (#132). Keying on id makes
+ * a concurrent or repeated seed a no-op for slides the doc already knows about.
+ *
+ * Runs inside a single transaction so observers see one atomic update.
  */
 export function initializeDoc(doc: Y.Doc, slides: Slide[]): void {
   const arr = getSlides(doc);
   doc.transact(() => {
-    if (arr.length > 0) arr.delete(0, arr.length);
-    arr.push(slides.map((s) => slideToYMap(s)));
+    const present = new Set<string>();
+    for (let i = 0; i < arr.length; i++) {
+      const id = arr.get(i).get(SLIDE_FIELDS.id) as string | undefined;
+      if (id) present.add(id);
+    }
+    const fresh = slides.filter((s) => !present.has(s.id));
+    if (fresh.length > 0) arr.push(fresh.map((s) => slideToYMap(s)));
   });
 }
 

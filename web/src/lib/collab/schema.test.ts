@@ -80,12 +80,42 @@ describe("collab schema", () => {
     expect("background" in content).toBe(false);
   });
 
-  it("initializeDoc replaces existing content", () => {
+  it("initializeDoc only appends slides whose id is not already present", () => {
     const doc = new Y.Doc();
-    initializeDoc(doc, [makeSlide({ id: "old" })]);
-    initializeDoc(doc, [makeSlide({ id: "new-1" }), makeSlide({ id: "new-2" })]);
-    expect(docToSlideContents(doc)).toHaveLength(2);
-    expect(getSlides(doc).map((s) => s.get("id"))).toEqual(["new-1", "new-2"]);
+    initializeDoc(doc, [makeSlide({ id: "a" })]);
+    // Re-seeding with an overlapping id-set must NOT re-insert "a" (idempotent),
+    // only the genuinely-new "b" is appended.
+    initializeDoc(doc, [makeSlide({ id: "a" }), makeSlide({ id: "b" })]);
+    expect(getSlides(doc).map((s) => s.get("id"))).toEqual(["a", "b"]);
+  });
+
+  it("initializeDoc is idempotent: re-seeding the same list is a no-op (#132)", () => {
+    // Regression: a client that seeds an empty room, then re-runs the seed (e.g.
+    // effect re-fire, or its own seed echoing back over the wire), must never
+    // duplicate slides. A duplicated slide id is what crashed the slide list
+    // render with "two children with the same key".
+    const doc = new Y.Doc();
+    const list = [makeSlide({ id: "s1" }), makeSlide({ id: "s2" })];
+    initializeDoc(doc, list);
+    initializeDoc(doc, list);
+    expect(getSlides(doc).map((s) => s.get("id"))).toEqual(["s1", "s2"]);
+  });
+
+  it("re-seeding a doc that already received a remote slide is a no-op (#132)", () => {
+    // The real-world race: the server's persisted slide syncs into this client's
+    // doc, THEN this client (effect re-fire / late list response) tries to seed
+    // the same slide it loaded over REST. id-keyed seeding must recognize the
+    // already-synced slide and not append a second copy.
+    const server = new Y.Doc();
+    initializeDoc(server, [makeSlide({ id: "dup" })]);
+
+    const client = new Y.Doc();
+    // Server state arrives first (post-sync).
+    Y.applyUpdate(client, Y.encodeStateAsUpdate(server));
+    // Now the client attempts to seed the same slide from its REST load.
+    initializeDoc(client, [makeSlide({ id: "dup" })]);
+
+    expect(getSlides(client).map((s) => s.get("id"))).toEqual(["dup"]);
   });
 
   it("syncs a doc update to a second peer via encoded state", () => {

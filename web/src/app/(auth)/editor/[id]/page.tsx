@@ -57,19 +57,26 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     if (!accessToken || !id) return;
     setPresentationId(id);
-    slidesApi.list(accessToken, id).then((res) => {
+    slidesApi.list(accessToken, id).then(async (res) => {
       const slideList = res.items as Slide[];
       setSlides(slideList);
       if (slideList.length > 0) setActiveSlide(slideList[0].id);
-      // Seed the shared doc on first join: if the room is still empty after the
-      // initial sync, this client publishes the loaded slides as the baseline.
-      // Subsequent joiners receive it over the wire and skip seeding.
-      if (doc && getSlides(doc).length === 0 && slideList.length > 0) {
-        initializeDoc(doc, slideList);
+      // Seed the shared doc on first join — but only AFTER the initial server
+      // sync has completed. Seeding against a still-empty pre-sync doc would
+      // double every slide: this client would push its REST-loaded copy while
+      // the server's already-persisted copy of the same slide is in flight, and
+      // a Y.Array does not dedupe by id, so the merge would land two entries per
+      // slide (#132). Awaiting sync means `getSlides(doc).length` reflects the
+      // server's real state; `initializeDoc` is also id-keyed as a backstop.
+      if (doc && provider) {
+        await provider.whenSynced();
+        if (getSlides(doc).length === 0 && slideList.length > 0) {
+          initializeDoc(doc, slideList);
+        }
       }
     });
     presentationsApi.get(accessToken, id).then(p => setTitle(p.title));
-  }, [id, accessToken, doc, setPresentationId, setSlides, setActiveSlide]);
+  }, [id, accessToken, doc, provider, setPresentationId, setSlides, setActiveSlide]);
 
   return (
     <SlideStructureProvider value={structure}>

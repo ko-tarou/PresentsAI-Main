@@ -55,6 +55,34 @@ export class CollabProvider {
     return this.provider?.wsconnected ?? false;
   }
 
+  /** True once the initial state sync with the server has completed. */
+  get synced(): boolean {
+    return this.provider?.synced ?? false;
+  }
+
+  /**
+   * Resolves once this room's initial sync with the server has completed (or
+   * immediately if it already has). Callers that seed an empty room must await
+   * this first: seeding before the server's persisted slides have arrived would
+   * duplicate every slide once the remote update merges in, because a Y.Array
+   * does not dedupe by slide id (#132). If the provider is gone (disconnected /
+   * destroyed) the promise never resolves; callers gate seeding behind it, so a
+   * torn-down room simply never seeds, which is the safe outcome.
+   */
+  whenSynced(): Promise<void> {
+    const provider = this.provider;
+    if (!provider) return new Promise<void>(() => {});
+    if (provider.synced) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const onSync = (isSynced: boolean) => {
+        if (!isSynced) return;
+        provider.off("sync", onSync);
+        resolve();
+      };
+      provider.on("sync", onSync);
+    });
+  }
+
   /** The shared, ordered slide list (Y.Array<Y.Map>). */
   get slides(): Y.Array<YSlideMap> {
     return getSlides(this.doc);
