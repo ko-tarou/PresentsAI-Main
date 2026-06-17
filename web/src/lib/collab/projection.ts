@@ -26,12 +26,22 @@ export interface SlideProjection {
  * Projects the whole doc into an ordered list of `{ id, position, content }`.
  * Slides without an id are skipped (a slide map is only meaningful once seeded
  * with its stable id).
+ *
+ * The output is deduplicated by id: the first Y.Map seen for a given id wins and
+ * any later duplicate is dropped. A Y.Array carries no unique-key constraint, so
+ * a concurrent seed / merge could in principle leave two entries sharing an id;
+ * this projection is the single materialization point feeding the slide store
+ * and React keys, so collapsing duplicates here is the last-line guard against
+ * the "two children with the same key" render crash (#132). The primary fix is
+ * upstream (id-keyed, sync-gated seeding) — this keeps the UI correct regardless.
  */
 export function projectDoc(doc: Y.Doc): SlideProjection[] {
   const out: SlideProjection[] = [];
+  const seen = new Set<string>();
   getSlides(doc).forEach((slide, i) => {
     const id = slide.get(SLIDE_FIELDS.id) as string | undefined;
-    if (!id) return;
+    if (!id || seen.has(id)) return;
+    seen.add(id);
     out.push({
       id,
       position: (slide.get(SLIDE_FIELDS.position) as number | undefined) ?? i,
